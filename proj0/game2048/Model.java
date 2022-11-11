@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author Rishabh Choudhury
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -110,9 +110,40 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
-        // TODO: Modify this.board (and perhaps this.score) to account
-        // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
+        //North Side
+        //Iterate through all tiles starting from row 2 and going down
+        for (int colIndex = 0; colIndex < board.size(); ++colIndex) {
+            int prevMoveIndex = 0; //Move tile index can never be 0, hence the default value
+            for (int rowIndex = 2; rowIndex >= 0; --rowIndex) {
+
+                int moveIndex = rowIndex;
+                if (board.tile(colIndex, rowIndex) != null) {
+                    Tile t = board.tile(colIndex, rowIndex);
+                    for (int nextRowIndex = rowIndex + 1; nextRowIndex < board.size(); ++nextRowIndex) {
+                        //next tile is null
+                        if (board.tile(colIndex, nextRowIndex) == null) {
+                            moveIndex = nextRowIndex;
+                            continue;
+                        }
+                        //next tile has same value and is not a previously merged tile
+                        if (givenTileHasSameValue(board, colIndex, nextRowIndex, t.value()) && nextRowIndex != prevMoveIndex) {
+                            moveIndex = nextRowIndex;
+                            prevMoveIndex = moveIndex;
+                            break;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (moveIndex != rowIndex) {
+                        boolean merged = board.move(colIndex, moveIndex, t);
+                        if (merged) {
+                            score += t.value() * 2;
+                        }
+                        changed = true;
+                    }
+                }
+            }
+        }
 
         checkGameOver();
         if (changed) {
@@ -137,7 +168,11 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        for(Tile currentTile: b){
+            if(currentTile == null){
+                return true;
+            }
+        }
         return false;
     }
 
@@ -147,7 +182,11 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        for(Tile currentTile: b){
+            if(currentTile != null && currentTile.value() == MAX_PIECE){
+                return true;
+            }
+        }
         return false;
     }
 
@@ -158,10 +197,35 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if(emptySpaceExists(b)){
+            return true;
+        }
+
+        for(int colIndex = 0; colIndex < b.size(); colIndex++){
+            for(int rowIndex = 0; rowIndex < b.size(); rowIndex++){
+                int currentTileValue = b.tile(colIndex, rowIndex).value();
+                if(givenTileHasSameValue(b, colIndex - 1, rowIndex, currentTileValue)) return true;  //Left Tile
+                if(givenTileHasSameValue(b, colIndex + 1, rowIndex, currentTileValue)) return true;  //Right Tile
+                if(givenTileHasSameValue(b, colIndex, rowIndex + 1, currentTileValue)) return true;  //Upper Tile
+                if(givenTileHasSameValue(b, colIndex, rowIndex - 1, currentTileValue)) return true;  //Lower Tile
+            }
+        }
         return false;
     }
 
+    /** Returns true if the given tile exists and has the same value as the current tile
+     *
+     * @return boolean
+     * @params b: Board,
+     * @params colIndex: adjacent tile col index
+     * @params rowIndex: adjacent tile row index
+     * @params value: current tile value */
+    public static boolean givenTileHasSameValue(Board b, int colIndex, int rowIndex, int value){
+        /* Check array bounds */
+        if(colIndex < 0 || colIndex >= b.size()) return false;
+        if(rowIndex < 0 || rowIndex >= b.size()) return false;
+        return b.tile(colIndex, rowIndex).value() == value;
+    }
 
     @Override
      /** Returns the model as a string, used for debugging. */
