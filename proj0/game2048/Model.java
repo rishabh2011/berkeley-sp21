@@ -110,32 +110,39 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
-        //North Side
-        //Iterate through all tiles starting from row 2 and going down
-        for (int colIndex = 0; colIndex < board.size(); ++colIndex) {
-            int prevMoveIndex = 0; //Move tile index can never be 0, hence the default value
-            for (int rowIndex = 2; rowIndex >= 0; --rowIndex) {
+        switch(side){
+            case EAST -> board.setViewingPerspective(Side.EAST);
+            case WEST -> board.setViewingPerspective(Side.WEST);
+            case SOUTH -> board.setViewingPerspective(Side.SOUTH);
+        }
 
-                int moveIndex = rowIndex;
-                if (board.tile(colIndex, rowIndex) != null) {
-                    Tile t = board.tile(colIndex, rowIndex);
-                    for (int nextRowIndex = rowIndex + 1; nextRowIndex < board.size(); ++nextRowIndex) {
-                        //next tile is null
-                        if (board.tile(colIndex, nextRowIndex) == null) {
-                            moveIndex = nextRowIndex;
+        //Iterate through all tiles starting from row 2 and going down
+        for (int col = 0; col < board.size(); ++col) {
+            int mergeRow = 0; //merge row can never be 0, hence the default value
+            for (int row = 2; row >= 0; --row) {
+                int moveRow = row; //set move row to current row
+
+                if (board.tile(col, row) != null) {
+                    Tile t = board.tile(col, row);
+                    for (int nextRow = row + 1; nextRow < board.size(); ++nextRow) {
+
+                        if (board.tile(col, nextRow) == null) {
+                            moveRow = nextRow;
                             continue;
                         }
-                        //next tile has same value and is not a previously merged tile
-                        if (givenTileHasSameValue(board, colIndex, nextRowIndex, t.value()) && nextRowIndex != prevMoveIndex) {
-                            moveIndex = nextRowIndex;
-                            prevMoveIndex = moveIndex;
-                            break;
-                        } else {
-                            break;
+
+                        //given tile has same value and is not a previously merged tile
+                        if (tileHasSameValue(board, col, nextRow, t.value())
+                                && nextRow != mergeRow) {
+                            moveRow = nextRow;
+                            mergeRow = moveRow;
                         }
+                        break;
                     }
-                    if (moveIndex != rowIndex) {
-                        boolean merged = board.move(colIndex, moveIndex, t);
+
+                    //move only if a valid move is found
+                    if (moveRow != row) {
+                        boolean merged = board.move(col, moveRow, t);
                         if (merged) {
                             score += t.value() * 2;
                         }
@@ -145,6 +152,7 @@ public class Model extends Observable {
             }
         }
 
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
@@ -201,13 +209,13 @@ public class Model extends Observable {
             return true;
         }
 
-        for(int colIndex = 0; colIndex < b.size(); colIndex++){
-            for(int rowIndex = 0; rowIndex < b.size(); rowIndex++){
-                int currentTileValue = b.tile(colIndex, rowIndex).value();
-                if(givenTileHasSameValue(b, colIndex - 1, rowIndex, currentTileValue)) return true;  //Left Tile
-                if(givenTileHasSameValue(b, colIndex + 1, rowIndex, currentTileValue)) return true;  //Right Tile
-                if(givenTileHasSameValue(b, colIndex, rowIndex + 1, currentTileValue)) return true;  //Upper Tile
-                if(givenTileHasSameValue(b, colIndex, rowIndex - 1, currentTileValue)) return true;  //Lower Tile
+        for(int col = 0; col < b.size(); col++){
+            for(int row = 0; row < b.size(); row++){
+                int tileValue = b.tile(col, row).value();
+                if(tileHasSameValue(b, col - 1, row, tileValue)) return true;  //Left Tile
+                if(tileHasSameValue(b, col + 1, row, tileValue)) return true;  //Right Tile
+                if(tileHasSameValue(b, col, row + 1, tileValue)) return true;  //Upper Tile
+                if(tileHasSameValue(b, col, row - 1, tileValue)) return true;  //Lower Tile
             }
         }
         return false;
@@ -216,11 +224,11 @@ public class Model extends Observable {
     /** Returns true if the given tile exists and has the same value as the current tile
      *
      * @return boolean
-     * @params b: Board,
-     * @params colIndex: adjacent tile col index
-     * @params rowIndex: adjacent tile row index
-     * @params value: current tile value */
-    public static boolean givenTileHasSameValue(Board b, int colIndex, int rowIndex, int value){
+     * @param b Board,
+     * @param colIndex adjacent tile col index
+     * @param rowIndex adjacent tile row index
+     * @param value current tile value */
+    public static boolean tileHasSameValue(Board b, int colIndex, int rowIndex, int value){
         /* Check array bounds */
         if(colIndex < 0 || colIndex >= b.size()) return false;
         if(rowIndex < 0 || rowIndex >= b.size()) return false;
