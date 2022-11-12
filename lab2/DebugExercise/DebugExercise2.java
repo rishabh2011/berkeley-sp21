@@ -7,13 +7,7 @@ package DebugExercise;
 public class DebugExercise2 {
     /** Returns the max of a and b. Do not step into this function. */
     public static int max(int a, int b) {
-        int w = (b - a) >> 31;
-        /* If you're stepping into this function, click the
-           step out button because you're not going to learn anything. */
-        int z = ~(b - a) >> 31;
-
-        int max = b & w | a & z;
-        return max;
+       return a >= b ? a : b;
     }
 
 
@@ -40,34 +34,27 @@ public class DebugExercise2 {
      * and b = {0, 20, 5}, this function will return {1, 20, 5}.
      * */
     public static int[] arrayMax(int[] a, int[] b) {
-
-        if(a != null && b != null){
-            if(a.length != b.length){
-                System.out.println("Arrays are not of similar length");
-                return null;
-            }
-
-            int[] maxArray = new int[a.length];
-            for(int i = 0; i < a.length; i++) {
-                if(a[i] > b[i]){
-                    maxArray[i] = a[i];
-                } else{
-                    maxArray[i] = b[i];
-                }
-            }
-
-            return maxArray;
+        if (a.length != b.length) {
+            System.out.println("ERROR! Arrays don't match");
+            return null;
         }
-        return null;
+        int[] returnArray = new int[a.length];
+        for (int i = 0; i < a.length; i += 1) {
+            int biggerValue = max(a[i], b[i]);
+            returnArray[i] = biggerValue;
+        }
+
+        return returnArray;
     }
 
     /** Returns the sum of all elements in x. */
     public static int arraySum(int[] x) {
+        int i = 0;
         int sum = 0;
-        for(int i = 0; i < x.length; i++){
-            sum += x[i];
+        while (i < x.length) {
+            sum = add(sum, x[i]);
+            i = i + 1;
         }
-
         return sum;
     }
 
