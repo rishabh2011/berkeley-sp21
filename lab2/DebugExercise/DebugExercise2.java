@@ -40,21 +40,25 @@ public class DebugExercise2 {
      * and b = {0, 20, 5}, this function will return {1, 20, 5}.
      * */
     public static int[] arrayMax(int[] a, int[] b) {
-        if(a.length != b.length){
-            System.out.println("Arrays are not of similar length");
-            return null;
-        }
 
-        int[] maxArray = new int[a.length];
-        for(int i = 0; i < a.length; i++) {
-            if(a[i] > b[i]){
-                maxArray[i] = a[i];
-            } else{
-                maxArray[i] = b[i];
+        if(a != null && b != null){
+            if(a.length != b.length){
+                System.out.println("Arrays are not of similar length");
+                return null;
             }
-        }
 
-        return maxArray;
+            int[] maxArray = new int[a.length];
+            for(int i = 0; i < a.length; i++) {
+                if(a[i] > b[i]){
+                    maxArray[i] = a[i];
+                } else{
+                    maxArray[i] = b[i];
+                }
+            }
+
+            return maxArray;
+        }
+        return null;
     }
 
     /** Returns the sum of all elements in x. */
