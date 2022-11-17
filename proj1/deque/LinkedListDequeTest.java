@@ -1,10 +1,15 @@
 package deque;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
+import edu.princeton.cs.algs4.StdRandom;
 
-/** Performs some basic linked list tests. */
+
+/**
+ * Performs some basic linked list tests.
+ */
 public class LinkedListDequeTest {
 
     @Test
@@ -17,22 +22,22 @@ public class LinkedListDequeTest {
 
         LinkedListDeque<String> lld1 = new LinkedListDeque<String>();
 
-		assertTrue("A newly initialized LLDeque should be empty", lld1.isEmpty());
-		lld1.addFirst("front");
+        assertTrue("A newly initialized LLDeque should be empty", lld1.isEmpty());
+        lld1.addFirst("front");
 
-		// The && operator is the same as "and" in Python.
-		// It's a binary operator that returns true if both arguments true, and false otherwise.
+        // The && operator is the same as "and" in Python.
+        // It's a binary operator that returns true if both arguments true, and false otherwise.
         assertEquals(1, lld1.size());
         assertFalse("lld1 should now contain 1 item", lld1.isEmpty());
 
-		lld1.addLast("middle");
-		assertEquals(2, lld1.size());
+        lld1.addLast("middle");
+        assertEquals(2, lld1.size());
 
-		lld1.addLast("back");
-		assertEquals(3, lld1.size());
+        lld1.addLast("back");
+        assertEquals(3, lld1.size());
 
-		System.out.println("Printing out deque: ");
-		lld1.printDeque();
+        System.out.println("Printing out deque: ");
+        lld1.printDeque();
 
     }
 
@@ -57,7 +62,7 @@ public class LinkedListDequeTest {
     }
 
     @Test
-    public void removeFirstTest(){
+    public void removeFirstTest() {
         LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
         lld1.removeFirst();
         assertTrue(lld1.size() == 0);
@@ -74,7 +79,7 @@ public class LinkedListDequeTest {
     }
 
     @Test
-    public void removeLastTest(){
+    public void removeLastTest() {
         LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
         lld1.removeLast();
         assertTrue(lld1.size() == 0);
@@ -95,16 +100,16 @@ public class LinkedListDequeTest {
     public void addRemoveTest() {
 
         LinkedListDeque<Integer> lld1 = new LinkedListDeque<Integer>();
-		// should be empty
-		assertTrue("lld1 should be empty upon initialization", lld1.isEmpty());
+        // should be empty
+        assertTrue("lld1 should be empty upon initialization", lld1.isEmpty());
 
-		lld1.addFirst(10);
-		// should not be empty
-		assertFalse("lld1 should contain 1 item", lld1.isEmpty());
+        lld1.addFirst(10);
+        // should not be empty
+        assertFalse("lld1 should contain 1 item", lld1.isEmpty());
 
-		lld1.removeFirst();
-		// should be empty
-		assertTrue("lld1 should be empty after removal", lld1.isEmpty());
+        lld1.removeFirst();
+        // should be empty
+        assertTrue("lld1 should be empty after removal", lld1.isEmpty());
 
     }
 
@@ -133,8 +138,8 @@ public class LinkedListDequeTest {
     /* Check if you can create LinkedListDeques with different parameterized types*/
     public void multipleParamTest() {
 
-        LinkedListDeque<String>  lld1 = new LinkedListDeque<String>();
-        LinkedListDeque<Double>  lld2 = new LinkedListDeque<Double>();
+        LinkedListDeque<String> lld1 = new LinkedListDeque<String>();
+        LinkedListDeque<Double> lld2 = new LinkedListDeque<Double>();
         LinkedListDeque<Boolean> lld3 = new LinkedListDeque<Boolean>();
 
         lld1.addFirst("string");
@@ -178,7 +183,7 @@ public class LinkedListDequeTest {
     }
 
     @Test
-    public void getInvalidIndexTest(){
+    public void getInvalidIndexTest() {
         LinkedListDeque<Integer> lld1 = new LinkedListDeque<Integer>();
         assertEquals(null, lld1.get(0)); //Empty list
 
@@ -190,6 +195,7 @@ public class LinkedListDequeTest {
         assertEquals(null, lld1.get(-3)); //Invalid index
         assertEquals(null, lld1.get(10)); //Invalid index
     }
+
     @Test
     /* Check get returns item at given index */
     public void getTest() {
@@ -198,12 +204,12 @@ public class LinkedListDequeTest {
             lld1.addLast(i);
         }
 
-        assertEquals((Integer)650000, lld1.get(650000));
-        assertEquals((Integer)250000, lld1.get(250000));
+        assertEquals((Integer) 650000, lld1.get(650000));
+        assertEquals((Integer) 250000, lld1.get(250000));
     }
 
     @Test
-    public void getRecursiveInvalidIndexTest(){
+    public void getRecursiveInvalidIndexTest() {
         LinkedListDeque<Integer> lld1 = new LinkedListDeque<Integer>();
         assertEquals(null, lld1.getRecursive(0)); //Empty list
 
@@ -215,6 +221,7 @@ public class LinkedListDequeTest {
         assertEquals(null, lld1.getRecursive(-3)); //Invalid index
         assertEquals(null, lld1.getRecursive(10)); //Invalid index
     }
+
     @Test
     /* Check get returns item at given index */
     public void getRecursiveTest() {
@@ -223,8 +230,8 @@ public class LinkedListDequeTest {
             lld1.addLast(i);
         }
 
-        assertEquals((Integer)650, lld1.getRecursive(650));
-        assertEquals((Integer)250, lld1.getRecursive(250));
+        assertEquals((Integer) 650, lld1.getRecursive(650));
+        assertEquals((Integer) 250, lld1.getRecursive(250));
     }
 
     @Test
@@ -249,5 +256,56 @@ public class LinkedListDequeTest {
 
         boolean isEqual = lld1.equals(lld2);
         assertTrue(isEqual);
+    }
+
+    @Test
+    public void randomizedTest() {
+        int n = 500;
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        for (int i = 0; i < n; i++) {
+            int operationNumber = StdRandom.uniform(0, 7);
+            //Add First
+            if (operationNumber == 0) {
+                int randVal = StdRandom.uniform(0, 100);
+                lld1.addFirst(randVal);
+                System.out.println("Add First : " + randVal);
+            }
+            //Remove First
+            else if (operationNumber == 1) {
+                Integer value = lld1.removeFirst();
+                System.out.println("Remove First : " + value);
+            }
+            //Remove Last
+            else if (operationNumber == 2) {
+                Integer value = lld1.removeLast();
+                System.out.println("Remove Last : " + value);
+            }
+            //Add Last
+            else if (operationNumber == 3) {
+                int randVal = StdRandom.uniform(0, 100);
+                lld1.addLast(randVal);
+                System.out.println("Add Last : " + randVal);
+            }
+            //Size
+            else if (operationNumber == 4) {
+                System.out.println("Size : " + lld1.size());
+            }
+            //Get Iterative
+            else if (operationNumber == 5) {
+                int randIndex = StdRandom.uniform(0, 10);
+                Integer value = lld1.get(randIndex);
+                System.out.println("Get Iterative Value at index : " + randIndex + " = " + value);
+            }
+            //Get Recursive
+            else if (operationNumber == 6) {
+                int randIndex = StdRandom.uniform(0, 10);
+                Integer value = lld1.getRecursive(randIndex);
+                System.out.println("Get Recursive Value at index : " + randIndex + " = " + value);
+            }
+        }
+
+        System.out.println("List Empty? : " + lld1.isEmpty());
+        System.out.println("Size : " + lld1.size());
+        lld1.printDeque();
     }
 }

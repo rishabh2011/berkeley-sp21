@@ -3,7 +3,7 @@ package deque;
 /**
  * LinkedListDeque provides a Deque implementation using Circular linked list data structure
  */
-public class LinkedListDeque<T> {
+public class ArrayDeque<T> {
     private LLNode sentinel;
     private int size;
 
@@ -26,7 +26,7 @@ public class LinkedListDeque<T> {
         }
     }
 
-    public LinkedListDeque() {
+    public ArrayDeque() {
         sentinel = new LLNode(null, null, null);
         size = 0;
     }
