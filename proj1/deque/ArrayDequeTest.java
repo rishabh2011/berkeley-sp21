@@ -28,8 +28,8 @@ public class ArrayDequeTest {
         ad.addFirst(7);
         ad.addFirst(6);
 
-        assertEquals((Integer) 6, ad.get(15));
-        assertEquals((Integer) 9, ad.get(1));
+        assertEquals((Integer) 6, ad.get(0));
+        assertEquals((Integer) 9, ad.get(2));
         assertEquals(null, ad.get(-12));
         assertEquals(null, ad.get(120));
 
@@ -94,8 +94,8 @@ public class ArrayDequeTest {
         ad.addFirst(7);
         ad.addFirst(6);
 
-        assertEquals((Integer) 6, ad.get(15));
-        assertEquals((Integer) 4, ad.get(2));
+        assertEquals((Integer) 4, ad.get(3));
+        assertEquals((Integer) 2, ad.get(5));
         assertEquals(null, ad.get(-12));
         assertEquals(null, ad.get(120));
 
@@ -141,8 +141,8 @@ public class ArrayDequeTest {
         ad.addFirst(5);
         ad.addFirst(3);
 
-        assertEquals((Integer) 5, ad.get(7));
-        assertEquals((Integer) 0, ad.get(2));
+        assertEquals((Integer) 5, ad.get(1));
+        assertEquals((Integer) 0, ad.get(4));
         assertEquals(null, ad.get(-12));
         assertEquals(null, ad.get(120));
 
@@ -162,11 +162,7 @@ public class ArrayDequeTest {
         assertEquals(null, ad.removeLast());
 
         // [0][9][8][1][3][5][4][2]
-        // resize
-        // [9][8][1][3][5][4][2][0][][][][][][][6][7]
-        // [9][][][][][][][][][][][][][][6][7]
-        // resize
-        //[6][7][9][][][][][5]
+        // [][0][8][1][3][5][][]
 
         ad.addFirst(0);
         ad.addFirst(2);
@@ -175,27 +171,18 @@ public class ArrayDequeTest {
         ad.addFirst(3);
         ad.addFirst(1);
         ad.addFirst(8);
-        ad.addFirst(9);
-        ad.addFirst(7);
-        ad.addFirst(6);
         ad.removeLast();
+        ad.addFirst(0);
         ad.removeLast();
-        ad.removeLast();
-        ad.removeLast();
-        ad.removeLast();
-        ad.removeLast();
-        ad.removeLast();
-        ad.addFirst(5);
-        ad.addLast(3);
         ad.removeLast();
 
-        assertEquals((Integer) 5, ad.get(7));
-        assertEquals((Integer) 7, ad.get(1));
+        assertEquals((Integer) 5, ad.get(4));
+        assertEquals((Integer) 8, ad.get(1));
         assertEquals(null, ad.get(-12));
         assertEquals(null, ad.get(120));
 
         assertFalse(ad.isEmpty());
-        assertEquals(4, ad.size());
+        assertEquals(5, ad.size());
 
         ad.printDeque();
     }

@@ -186,7 +186,14 @@ public class ArrayDeque<T> {
         if (index >= items.length || index < 0) {
             return null;
         }
-        return items[index];
+        //Given index crosses the end of array
+        //Therefore loop to the beginning keeping track of the number of elements skipped
+        if (nextFirst + 1 + index >= items.length) {
+            int numItemsBeforeLooping = items.length - 1 - nextFirst;
+            return items[index - numItemsBeforeLooping];
+        } else {
+            return items[nextFirst + 1 + index];
+        }
     }
 
     /**
