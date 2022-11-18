@@ -1,34 +1,23 @@
 package deque;
 
 /**
- * LinkedListDeque provides a Deque implementation using Circular linked list data structure
+ * ArrayDeque provides a Deque implementation using an array data structure
  */
 public class ArrayDeque<T> {
-    private LLNode sentinel;
+
+    final int START_SIZE = 8;  //starting array size
+    final int MIN_RESIZE = 16;   //minimum array size before resizing is considered
+    final double MIN_USAGE_FACTOR = 0.25; //minimum array usage factor to consider for resizing
+    private T[] items;
     private int size;
-
-    private class LLNode {
-        LLNode prev;
-        T item;
-        LLNode next;
-
-        /**
-         * Creates a new LLNode
-         *
-         * @param i : item to be inserted into the node
-         * @param p : previous list node
-         * @param n : next list node
-         */
-        public LLNode(T i, LLNode p, LLNode n) {
-            prev = p;
-            item = i;
-            next = n;
-        }
-    }
+    private int nextFirst;
+    private int nextLast;
 
     public ArrayDeque() {
-        sentinel = new LLNode(null, null, null);
+        items = (T[]) new Object[START_SIZE];
         size = 0;
+        nextFirst = 0;
+        nextLast = 1;
     }
 
     /**
@@ -37,34 +26,25 @@ public class ArrayDeque<T> {
      * @param item : item to be added to the deque
      */
     public void addFirst(T item) {
-
-        LLNode prevFirstNode = sentinel.next;
-        LLNode newFirstNode = new LLNode(item, sentinel, prevFirstNode);
-        sentinel.next = newFirstNode;
+        items[nextFirst] = item;
         ++size;
+        setNextFirst();
 
-        if (prevFirstNode != null) {
-            prevFirstNode.prev = newFirstNode;
-        }
-
-        //One item in list
-        if (newFirstNode.next == null) {
-            makeCircular(newFirstNode);
+        //Existing array is full
+        if (items[nextFirst] != null) {
+            resize(size * 2);
         }
     }
 
     /**
-     * Makes the list circular when the first node is added
-     * <p>Both Sentinel node pointers point to the given node and vice versa
-     * completing a full circle</p>
-     *
-     * @param node the first node added to the list
+     * Sets the next available first item index in the array
      */
-    private void makeCircular(LLNode node) {
-        sentinel.next = node;
-        sentinel.prev = node;
-        node.next = sentinel;
-        node.prev = sentinel;
+    private void setNextFirst() {
+        if (nextFirst == 0) {
+            nextFirst = items.length - 1;
+        } else {
+            --nextFirst;
+        }
     }
 
     /**
@@ -73,23 +53,106 @@ public class ArrayDeque<T> {
      * @param item item to be added to the deque
      */
     public void addLast(T item) {
-        LLNode prevLastNode = sentinel.prev;
-        LLNode newLastNode = new LLNode(item, prevLastNode, sentinel);
-        sentinel.prev = newLastNode;
+        items[nextLast] = item;
         ++size;
+        setNextLast();
 
-        if (prevLastNode != null) {
-            prevLastNode.next = newLastNode;
-        }
-
-        //One item in list
-        if (newLastNode.prev == null) {
-            makeCircular(newLastNode);
+        //Existing array is full
+        if (items[nextLast] != null) {
+            resize(size * 2);
         }
     }
 
     /**
+     * Sets the next available last item index in the array
+     */
+    private void setNextLast() {
+        if (nextLast == items.length - 1) {
+            nextLast = 0;
+        } else {
+            ++nextLast;
+        }
+    }
+
+    /**
+     * Removes the first item in the deque and returns the removed item
+     *
+     * @return item that was removed | null
+     */
+    public T removeFirst() {
+        T item;
+        if (size == 0) {
+            return null;
+        } else if (nextFirst == items.length - 1) { //loop to the start of the array and remove the first item
+            item = items[0];
+            items[0] = null;
+            nextFirst = 0;
+        } else { //remove the first item
+            item = items[nextFirst + 1];
+            items[nextFirst + 1] = null;
+            ++nextFirst;
+        }
+        --size;
+
+        if (items.length >= MIN_RESIZE && ((double) size / (double) items.length) < 0.25) {
+            resize(items.length / 2);
+        }
+
+        return item;
+    }
+
+    /**
+     * Removes the last item in the deque and returns the removed item
+     *
+     * @return item that was removed | null
+     */
+    public T removeLast() {
+        T item;
+        if (size == 0) {
+            return null;
+        } else if (nextLast == 0) { //loop to the back of the array and remove the last item
+            item = items[items.length - 1];
+            items[items.length - 1] = null;
+            nextLast = items.length - 1;
+        } else { //remove the last item
+            item = items[nextLast - 1];
+            items[nextLast - 1] = null;
+            --nextLast;
+        }
+        --size;
+
+        if (items.length >= MIN_RESIZE && ((double) size / (double) items.length) < MIN_USAGE_FACTOR) {
+            resize(items.length / 2);
+        }
+
+        return item;
+    }
+
+    /**
+     * Creates a new array of given capacity and copies existing array values to the new array
+     *
+     * @param capacity the size of the new array
+     */
+    private void resize(int capacity) {
+        T[] newArr = (T[]) new Object[capacity];
+        int currIndex = nextFirst + 1;
+        for (int i = 0; i < size; i++) {
+            //loop to the front of the array if the end of the array has been reached
+            if (currIndex == items.length) {
+                currIndex = 0;
+            }
+            newArr[i] = items[currIndex];
+            ++currIndex;
+        }
+        items = newArr;
+        nextFirst = items.length - 1;
+        nextLast = size;
+    }
+
+    /**
      * Returns true if Deque is empty. Else returns false
+     *
+     * @return true | false
      */
     public boolean isEmpty() {
         return size == 0;
@@ -97,6 +160,8 @@ public class ArrayDeque<T> {
 
     /**
      * Returns the size of the Deque
+     *
+     * @return size of the deque
      */
     public int size() {
         return size;
@@ -106,152 +171,43 @@ public class ArrayDeque<T> {
      * Prints the deque
      */
     public void printDeque() {
-        if (sentinel.next == null) {
-            System.out.println("No items in the deque");
-        } else {
-            LLNode temp = sentinel.next;
-            while (temp != sentinel) {
-                System.out.print(temp.item + " ");
-                temp = temp.next;
-            }
+        for (T item : items) {
+            System.out.print(item + " ");
         }
-    }
-
-    /**
-     * Removes the first item in the deque and returns the removed item
-     */
-    public T removeFirst() {
-        LLNode firstNode = sentinel.next;
-        if (firstNode != null) {
-            --size;
-            //the list will become empty after removal of firstNode
-            if (isEmpty()) {
-                sentinel.next = null;
-                sentinel.prev = null;
-            } else {
-                //point sentinel.next to 2nd node after first
-                sentinel.next = firstNode.next;
-                //point 2nd node.prev to sentinel
-                firstNode.next.prev = sentinel;
-            }
-            return firstNode.item;
-        }
-        return null;
-    }
-
-    /**
-     * Removes the last item in the deque and returns the removed item
-     */
-    public T removeLast() {
-        LLNode lastNode = sentinel.prev;
-        if (lastNode != null) {
-            --size;
-            //the list will become empty after removal of lastNode
-            if (isEmpty()) {
-                sentinel.next = null;
-                sentinel.prev = null;
-            } else {
-                //point sentinel.prev to 2nd last node
-                sentinel.prev = lastNode.prev;
-                //point 2nd last node.next to sentinel
-                lastNode.prev.next = sentinel;
-            }
-            return lastNode.item;
-        }
-        return null;
     }
 
     /**
      * Iterates through the deque and returns the item found at the specified index
+     *
+     * @return item found at the given index | null
      */
     public T get(int index) {
-        //Return null for invalid index (Also applies for empty list)
-        if (index >= size || index < 0) {
+        //Return null for invalid index (Also applies for empty array)
+        if (index >= items.length || index < 0) {
             return null;
-        } else if (index > (size / 2)) {  //index falls in the latter half of the list
-            return getBack(size - 1 - index);
-        } else {
-            return getFront(index);
         }
-    }
-
-    /**
-     * Iterates from the back of the list to the specified index and returns the item
-     */
-    private T getBack(int index) {
-        LLNode temp = sentinel.prev;
-        for (int i = 0; i < index; i++) {
-            temp = temp.prev;
-        }
-        return temp.item;
-    }
-
-    /**
-     * Iterates from the front of the list to the specified index and returns the item
-     */
-    private T getFront(int index) {
-        LLNode temp = sentinel.next;
-        for (int i = 0; i < index; i++) {
-            temp = temp.next;
-        }
-        return temp.item;
-    }
-
-    /**
-     * Recursively iterates through the deque and returns the item found at the specified index
-     */
-    public T getRecursive(int index) {
-        //Return null for invalid index (Also applies for empty list)
-        if (index >= size || index < 0) {
-            return null;
-        } else if (index > (size / 2)) { //index falls in the latter half of the list
-            return getBackRecursive(sentinel.prev, size - 1 - index);
-        } else {
-            return getFrontRecursive(sentinel.next, index);
-        }
-    }
-
-    /**
-     * Recursively Iterates from the back of the list to the specified index and returns the item
-     */
-    private T getBackRecursive(LLNode node, int index) {
-        if (index == 0) {
-            return node.item;
-        }
-        return getBackRecursive(node.prev, --index);
-    }
-
-    /**
-     * Recursively Iterates from the front of the list to the specified index and returns the item
-     */
-    private T getFrontRecursive(LLNode node, int index) {
-        if (index == 0) {
-            return node.item;
-        }
-        return getFrontRecursive(node.next, --index);
+        return items[index];
     }
 
     /**
      * Returns whether the parameter o is equal to the Deque.
      *
      * @param o An object
+     * @return true | false
      */
     public boolean equals(Object o) {
-        if (!(o instanceof LinkedListDeque)) {
+        if (!(o instanceof ArrayDeque)) { //o is not an array deque
             return false;
-        } else if (size != ((LinkedListDeque<T>) o).size()) { //o is not a deque
+        } else if (size != ((ArrayDeque<T>) o).size()) { //deque o is not of same size
             return false;
-        } else { //deque o is not of same size
-            LLNode temp = sentinel.next;
+        } else {
             for (int i = 0; i < size; i++) {
-                T item = ((LinkedListDeque<T>) o).get(i);
-                if (temp.item != item) {
+                T item = ((ArrayDeque<T>) o).get(i);
+                if (items[i] != item) {
                     return false;
                 }
-                temp = temp.next;
             }
         }
         return true;
     }
-
 }

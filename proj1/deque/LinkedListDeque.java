@@ -90,6 +90,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Returns true if Deque is empty. Else returns false
+     *
+     * @return true | false
      */
     public boolean isEmpty() {
         return size == 0;
@@ -97,6 +99,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Returns the size of the Deque
+     *
+     * @return size of the deque
      */
     public int size() {
         return size;
@@ -119,6 +123,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Removes the first item in the deque and returns the removed item
+     *
+     * @return item that was removed | null
      */
     public T removeFirst() {
         LLNode firstNode = sentinel.next;
@@ -141,6 +147,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Removes the last item in the deque and returns the removed item
+     *
+     * @return item that was removed | null
      */
     public T removeLast() {
         LLNode lastNode = sentinel.prev;
@@ -163,6 +171,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Iterates through the deque and returns the item found at the specified index
+     *
+     * @return item found at the given index | null
      */
     public T get(int index) {
         //Return null for invalid index (Also applies for empty list)
@@ -177,6 +187,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Iterates from the back of the list to the specified index and returns the item
+     *
+     * @return item found at the given index | null
      */
     private T getBack(int index) {
         LLNode temp = sentinel.prev;
@@ -188,6 +200,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Iterates from the front of the list to the specified index and returns the item
+     *
+     * @return item found at the given index | null
      */
     private T getFront(int index) {
         LLNode temp = sentinel.next;
@@ -199,6 +213,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Recursively iterates through the deque and returns the item found at the specified index
+     *
+     * @return item found at the given index | null
      */
     public T getRecursive(int index) {
         //Return null for invalid index (Also applies for empty list)
@@ -213,6 +229,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Recursively Iterates from the back of the list to the specified index and returns the item
+     *
+     * @return item found at the given index | null
      */
     private T getBackRecursive(LLNode node, int index) {
         if (index == 0) {
@@ -223,6 +241,8 @@ public class LinkedListDeque<T> {
 
     /**
      * Recursively Iterates from the front of the list to the specified index and returns the item
+     *
+     * @return item found at the given index | null
      */
     private T getFrontRecursive(LLNode node, int index) {
         if (index == 0) {
@@ -235,6 +255,7 @@ public class LinkedListDeque<T> {
      * Returns whether the parameter o is equal to the Deque.
      *
      * @param o An object
+     * @return true | false
      */
     public boolean equals(Object o) {
         if (!(o instanceof LinkedListDeque)) {
