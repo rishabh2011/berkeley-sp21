@@ -7,7 +7,7 @@ import java.util.Iterator;
  */
 public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
-    final int START_SIZE = 8;  //starting array size
+    static final int DEF_START_SIZE = 8;  //starting array size
     final int MIN_RESIZE = 16;   //minimum array size before resizing is considered
     final double MIN_USAGE_FACTOR = 0.25; //minimum array usage factor to consider for resizing
     private T[] items;
@@ -16,7 +16,11 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
     private int nextLast;
 
     public ArrayDeque() {
-        items = (T[]) new Object[START_SIZE];
+        this(DEF_START_SIZE);
+    }
+
+    public ArrayDeque(int capacity) {
+        items = (T[]) new Object[capacity];
         size = 0;
         nextFirst = 0;
         nextLast = 1;
@@ -210,7 +214,7 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
         } else {
             for (int i = 0; i < size; i++) {
                 T item = ((ArrayDeque<T>) o).get(i);
-                if (items[i] != item) {
+                if (get(i) != item) {
                     return false;
                 }
             }
