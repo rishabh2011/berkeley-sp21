@@ -21,7 +21,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
          * @param p : previous list node
          * @param n : next list node
          */
-        public LLNode(T i, LLNode p, LLNode n) {
+        LLNode(T i, LLNode p, LLNode n) {
             prev = p;
             item = i;
             next = n;
@@ -257,16 +257,16 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
      * @param o An object
      * @return true | false
      */
+    @Override
     public boolean equals(Object o) {
-        if (!(o instanceof LinkedListDeque)) {
+        if (!(o instanceof Deque oad)) { //o is not a deque
             return false;
-        } else if (size != ((LinkedListDeque<T>) o).size()) { //o is not a deque
+        } else if (size != oad.size()) { //deque o is not of same size
             return false;
-        } else { //deque o is not of same size
+        } else {
             LLNode temp = sentinel.next;
             for (int i = 0; i < size; i++) {
-                T item = ((LinkedListDeque<T>) o).get(i);
-                if (temp.item != item) {
+                if (temp.item != oad.get(i)) {
                     return false;
                 }
                 temp = temp.next;
@@ -291,12 +291,13 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
         LLNode currentNode;
 
-        public LinkedListDequeIterator() {
+        LinkedListDequeIterator() {
             currentNode = sentinel.next;
         }
 
         public boolean hasNext() {
-            return currentNode != sentinel;
+
+            return currentNode != sentinel && currentNode != null;
         }
 
         public T next() {

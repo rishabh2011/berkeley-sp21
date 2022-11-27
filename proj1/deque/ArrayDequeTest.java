@@ -223,6 +223,9 @@ public class ArrayDequeTest {
         for (double i = 999999; i > 500000; i--) {
             assertEquals(lld1.removeLast(), ad.removeLast());
         }
+
+        assertTrue(ad.equals(lld1));
+        assertTrue(lld1.equals(ad));
     }
 
     @Test

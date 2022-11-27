@@ -92,7 +92,8 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
         T item;
         if (size == 0) {
             return null;
-        } else if (nextFirst == items.length - 1) { //loop to the start of the array and remove the first item
+        } else if (nextFirst == items.length - 1) { //loop to the start of the array
+            // and remove the first item
             item = items[0];
             items[0] = null;
             nextFirst = 0;
@@ -131,7 +132,8 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
         }
         --size;
 
-        if (items.length >= MIN_RESIZE && ((double) size / (double) items.length) < MIN_USAGE_FACTOR) {
+        if (items.length >= MIN_RESIZE
+                && ((double) size / (double) items.length) < MIN_USAGE_FACTOR) {
             resize(items.length / 2);
         }
 
@@ -206,15 +208,15 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
      * @param o An object
      * @return true | false
      */
+    @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ArrayDeque)) { //o is not an array deque
+        if (!(o instanceof Deque oad)) { //o is not a deque
             return false;
-        } else if (size != ((ArrayDeque<T>) o).size()) { //deque o is not of same size
+        } else if (size != oad.size()) { //deque o is not of same size
             return false;
         } else {
             for (int i = 0; i < size; i++) {
-                T item = ((ArrayDeque<T>) o).get(i);
-                if (get(i) != item) {
+                if (get(i) != oad.get(i)) {
                     return false;
                 }
             }
@@ -238,7 +240,7 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
         int iterPos;
 
-        public ArrayDequeIterator() {
+        ArrayDequeIterator() {
             iterPos = nextFirst + 1;
         }
 
