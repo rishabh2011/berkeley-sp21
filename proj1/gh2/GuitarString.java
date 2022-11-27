@@ -19,7 +19,7 @@ public class GuitarString {
     /* Create a guitar string of the given frequency.  */
     public GuitarString(double frequency) {
         int bufferCapacity = (int) Math.round(SR / frequency);
-        buffer = new ArrayDeque<>(bufferCapacity);
+        buffer = new ArrayDeque<>();
         for (int i = 0; i < bufferCapacity; ++i) {
             buffer.addLast(0.0);
         }

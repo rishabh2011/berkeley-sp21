@@ -7,20 +7,16 @@ import java.util.Iterator;
  */
 public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
-    static final int DEF_START_SIZE = 8;  //starting array size
-    final int MIN_RESIZE = 16;   //minimum array size before resizing is considered
-    final double MIN_USAGE_FACTOR = 0.25; //minimum array usage factor to consider for resizing
+    private static final int DEF_CAPACITY = 8;  //starting array size
+    private final int MIN_RESIZE = 16;   //minimum array size before resizing is considered
+    private final double MIN_USAGE_FACTOR = 0.25; //minimum array usage factor to consider for resizing
     private T[] items;
     private int size;
     private int nextFirst;
     private int nextLast;
 
     public ArrayDeque() {
-        this(DEF_START_SIZE);
-    }
-
-    public ArrayDeque(int capacity) {
-        items = (T[]) new Object[capacity];
+        items = (T[]) new Object[DEF_CAPACITY];
         size = 0;
         nextFirst = 0;
         nextLast = 1;
@@ -210,18 +206,24 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
      */
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Deque)) { //o is not a deque
-            return false;
-        } else if (size != ((Deque) o).size()) { //deque o is not of same size
-            return false;
-        } else {
-            for (int i = 0; i < size; i++) {
-                if (get(i) != ((Deque) o).get(i)) {
-                    return false;
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof Deque) { //o is not a deque
+            if (size != ((Deque<T>) o).size()) { //deque o is not of same size
+                return false;
+            } else {
+                for (int i = 0; i < size; i++) {
+                    T item = get(i);
+                    T odItem = ((Deque<T>) o).get(i);
+                    if (item != odItem) {
+                        return false;
+                    }
                 }
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
