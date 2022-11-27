@@ -5,7 +5,7 @@ import java.util.Iterator;
 /**
  * LinkedListDeque provides a Deque implementation using Circular linked list data structure
  */
-public class LinkedListDeque<T> implements Iterable<T> {
+public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
     private LLNode sentinel;
     private int size;
 
@@ -38,6 +38,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
      *
      * @param item : item to be added to the deque
      */
+    @Override
     public void addFirst(T item) {
 
         LLNode prevFirstNode = sentinel.next;
@@ -74,6 +75,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
      *
      * @param item item to be added to the deque
      */
+    @Override
     public void addLast(T item) {
         LLNode prevLastNode = sentinel.prev;
         LLNode newLastNode = new LLNode(item, prevLastNode, sentinel);
@@ -91,19 +93,11 @@ public class LinkedListDeque<T> implements Iterable<T> {
     }
 
     /**
-     * Returns true if Deque is empty. Else returns false
-     *
-     * @return true | false
-     */
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    /**
      * Returns the size of the Deque
      *
      * @return size of the deque
      */
+    @Override
     public int size() {
         return size;
     }
@@ -111,6 +105,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
     /**
      * Prints the deque
      */
+    @Override
     public void printDeque() {
         if (sentinel.next == null) {
             System.out.println("No items in the deque");
@@ -128,6 +123,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
      *
      * @return item that was removed | null
      */
+    @Override
     public T removeFirst() {
         LLNode firstNode = sentinel.next;
         if (firstNode != null) {
@@ -152,6 +148,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
      *
      * @return item that was removed | null
      */
+    @Override
     public T removeLast() {
         LLNode lastNode = sentinel.prev;
         if (lastNode != null) {
@@ -176,6 +173,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
      *
      * @return item found at the given index | null
      */
+    @Override
     public T get(int index) {
         //Return null for invalid index (Also applies for empty list)
         if (index >= size || index < 0) {

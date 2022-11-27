@@ -5,7 +5,7 @@ import java.util.Iterator;
 /**
  * ArrayDeque provides a Deque implementation using an array data structure
  */
-public class ArrayDeque<T> implements Iterable<T> {
+public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
     final int START_SIZE = 8;  //starting array size
     final int MIN_RESIZE = 16;   //minimum array size before resizing is considered
@@ -27,6 +27,7 @@ public class ArrayDeque<T> implements Iterable<T> {
      *
      * @param item : item to be added to the deque
      */
+    @Override
     public void addFirst(T item) {
         items[nextFirst] = item;
         ++size;
@@ -54,6 +55,7 @@ public class ArrayDeque<T> implements Iterable<T> {
      *
      * @param item item to be added to the deque
      */
+    @Override
     public void addLast(T item) {
         items[nextLast] = item;
         ++size;
@@ -81,6 +83,7 @@ public class ArrayDeque<T> implements Iterable<T> {
      *
      * @return item that was removed | null
      */
+    @Override
     public T removeFirst() {
         T item;
         if (size == 0) {
@@ -108,6 +111,7 @@ public class ArrayDeque<T> implements Iterable<T> {
      *
      * @return item that was removed | null
      */
+    @Override
     public T removeLast() {
         T item;
         if (size == 0) {
@@ -152,19 +156,11 @@ public class ArrayDeque<T> implements Iterable<T> {
     }
 
     /**
-     * Returns true if Deque is empty. Else returns false
-     *
-     * @return true | false
-     */
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    /**
      * Returns the size of the Deque
      *
      * @return size of the deque
      */
+    @Override
     public int size() {
         return size;
     }
@@ -172,6 +168,7 @@ public class ArrayDeque<T> implements Iterable<T> {
     /**
      * Prints the deque
      */
+    @Override
     public void printDeque() {
         for (T item : items) {
             System.out.print(item + " ");
@@ -183,6 +180,7 @@ public class ArrayDeque<T> implements Iterable<T> {
      *
      * @return item found at the given index | null
      */
+    @Override
     public T get(int index) {
         //Return null for invalid index (Also applies for empty array)
         if (index >= items.length || index < 0) {
