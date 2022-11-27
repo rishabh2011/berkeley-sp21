@@ -9,7 +9,9 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
     private static final int DEF_CAPACITY = 8;  //starting array size
     private final int MIN_RESIZE = 16;   //minimum array size before resizing is considered
-    private final double MIN_USAGE_FACTOR = 0.25; //minimum array usage factor to consider for resizing
+
+    //minimum array usage factor to consider for resizing
+    private final double MIN_USAGE_FACTOR = 0.25;
     private T[] items;
     private int size;
     private int nextFirst;
