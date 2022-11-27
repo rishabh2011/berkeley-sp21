@@ -1,9 +1,11 @@
 package deque;
 
+import java.util.Iterator;
+
 /**
  * LinkedListDeque provides a Deque implementation using Circular linked list data structure
  */
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Iterable<T> {
     private LLNode sentinel;
     private int size;
 
@@ -273,6 +275,37 @@ public class LinkedListDeque<T> {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns an iterator for LinkedListDeque
+     *
+     * @return iterator for LinkedDeque
+     */
+    public Iterator<T> iterator() {
+        return new LinkedListDequeIterator();
+    }
+
+    /**
+     * Iterator class for LinkedListDeque
+     */
+    private class LinkedListDequeIterator implements Iterator<T> {
+
+        LLNode currentNode;
+
+        public LinkedListDequeIterator() {
+            currentNode = sentinel.next;
+        }
+
+        public boolean hasNext() {
+            return currentNode != sentinel;
+        }
+
+        public T next() {
+            T item = currentNode.item;
+            currentNode = currentNode.next;
+            return item;
+        }
     }
 
 }

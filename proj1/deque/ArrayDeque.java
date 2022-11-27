@@ -1,9 +1,11 @@
 package deque;
 
+import java.util.Iterator;
+
 /**
  * ArrayDeque provides a Deque implementation using an array data structure
  */
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Iterable<T> {
 
     final int START_SIZE = 8;  //starting array size
     final int MIN_RESIZE = 16;   //minimum array size before resizing is considered
@@ -216,5 +218,41 @@ public class ArrayDeque<T> {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns an iterator for ArrayDeque
+     *
+     * @return iterator for ArrayDeque
+     */
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
+
+    /**
+     * Iterator class for ArrayDeque
+     */
+    private class ArrayDequeIterator implements Iterator<T> {
+
+        int iterPos;
+
+        public ArrayDequeIterator() {
+            iterPos = nextFirst + 1;
+        }
+
+        public boolean hasNext() {
+            return iterPos != nextLast;
+        }
+
+        public T next() {
+            //loop to the front of the array if the end of the array has been reached
+            if (iterPos == items.length) {
+                iterPos = 0;
+            }
+
+            T item = items[iterPos];
+            ++iterPos;
+            return item;
+        }
     }
 }
