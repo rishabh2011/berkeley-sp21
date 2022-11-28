@@ -218,7 +218,7 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
                 for (int i = 0; i < size; i++) {
                     T item = get(i);
                     T odItem = ((Deque<T>) o).get(i);
-                    if (item != odItem) {
+                    if (!(item.equals(odItem))) {
                         return false;
                     }
                 }
