@@ -140,7 +140,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     }
 
     @Override
-    public Set keySet() {
+    public Set<K> keySet() {
         throw new UnsupportedOperationException();
     }
 
@@ -154,8 +154,28 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public Iterator iterator() {
+    public Iterator<K> iterator() {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Prints all the key value pairs in the map in increasing order of key
+     */
+    public void printInOrder() {
+        printInOrder(sentinel.left);
+    }
+
+    /**
+     * Helper method for printInOrder that recursively prints
+     * key value pairs in order of increasing key
+     */
+    private void printInOrder(BSTNode node) {
+        if (node == null) {
+            return;
+        }
+
+        printInOrder(node.left);
+        System.out.println(node.key + ": " + node.value);
+        printInOrder(node.right);
     }
 }
