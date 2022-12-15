@@ -1,0 +1,16 @@
+
+class bstmap.ULLMap: 0.006
+class bstmap.BSTMap: 0.004
+Java's Built-in TreeMap: 0.003
+Java's Built-in HashMap: 0.001
+class bstmap.ULLMap: 0.003
+class bstmap.BSTMap: 0.002
+Java's Built-in TreeMap: 0.003
+Java's Built-in HashMap: 0.001
+class bstmap.ULLMap: 0.424
+class bstmap.BSTMap: 0.048
+Java's Built-in TreeMap: 0.042
+Java's Built-in HashMap: 0.044
+class bstmap.BSTMap: 0.43
+Java's Built-in TreeMap: 0.425
+Java's Built-in HashMap: 0.439

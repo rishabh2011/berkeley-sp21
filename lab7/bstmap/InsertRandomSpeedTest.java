@@ -1,5 +1,6 @@
 package bstmap;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.io.IOException;
@@ -11,6 +12,9 @@ import edu.princeton.cs.algs4.Stopwatch;
  *  @author Brendan Hu
  */
 public class InsertRandomSpeedTest {
+
+    static final File CWD = new File(System.getProperty("user.dir"));
+
     /**
         Requests user input and performs tests of three different set
         implementations. ARGS is unused.
@@ -84,7 +88,9 @@ public class InsertRandomSpeedTest {
     public static void timeRandomMap61B(Map61B<String, Integer> map, int N, int L) {
         try {
             double mapTime = insertRandom(map, N, L);
-            System.out.printf(map.getClass() + ": %.2f sec\n", mapTime);
+            String result = map.getClass().toString() + ": " + mapTime + "\n";
+            System.out.print(result);
+            recordResult(result);
         } catch (StackOverflowError e) {
             printInfoOnStackOverflow(N, L);
         } catch (RuntimeException e) {
@@ -100,7 +106,9 @@ public class InsertRandomSpeedTest {
     public static void timeRandomTreeMap(TreeMap<String, Integer> treeMap, int N, int L) {
         try {
             double javaTime = insertRandom(treeMap, N, L);
-            System.out.printf("Java's Built-in TreeMap: %.2f sec\n", javaTime);
+            String result = "Java's Built-in TreeMap: " + javaTime + "\n";
+            System.out.print(result);
+            recordResult(result);
         } catch (StackOverflowError e) {
             printInfoOnStackOverflow(N, L);
         } catch (RuntimeException e) {
@@ -116,7 +124,9 @@ public class InsertRandomSpeedTest {
     public static void timeRandomHashMap(HashMap<String, Integer> hashMap, int N, int L) {
         try {
             double javaTime = insertRandom(hashMap, N, L);
-            System.out.printf("Java's Built-in HashMap: %.2f sec\n", javaTime);
+            String result = "Java's Built-in HashMap: " + javaTime + "\n";
+            System.out.print(result);
+            recordResult(result);
         } catch (StackOverflowError e) {
             printInfoOnStackOverflow(N, L);
         } catch (RuntimeException e) {
@@ -147,13 +157,24 @@ public class InsertRandomSpeedTest {
         Prints the error with corresponding N and L
     */
     private static void printInfoOnStackOverflow(int N, int L) {
-        System.out.println("--Stack Overflow -- couldn't add " + N
-                            + " strings of length " + L + ".");
+        String message =  "--Stack Overflow -- couldn't add " + N
+                + " strings of length " + L + ".\n";
+        System.out.print(message);
+        recordResult(message);
     }
 
     /** Prints a nice message for the user on bad input */
     private static void errorBadIntegerInput() {
         System.out.print("Please enter a positive integer: ");
+    }
+
+    private static void recordResult(String result){
+        File f = new File(Utils.join(CWD, "speedTestResults.txt").toString());
+        if(f.exists()){
+            String content = Utils.readContentsAsString(f);
+            content += result;
+            Utils.writeContents(f, content);
+        }
     }
 
 }
