@@ -9,11 +9,16 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) {
-        // TODO: what if args is empty?
+        if(args.length == 0){
+            Utils.message("Please enter atleast one arguement.");
+        }
+
         String firstArg = args[0];
+        Repository gitlet = new Repository();
+
         switch(firstArg) {
             case "init":
-                // TODO: handle the `init` command
+                gitlet.init();
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
