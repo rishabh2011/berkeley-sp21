@@ -21,7 +21,7 @@ public class Main {
                 gitlet.init();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
+                gitlet.add(args[1]);
                 break;
             // TODO: FILL THE REST IN
         }
