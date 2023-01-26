@@ -23,6 +23,9 @@ public class Main {
             case "add":
                 gitlet.add(args[1]);
                 break;
+            case "commit":
+                gitlet.commit(args[1]);
+                break;
             // TODO: FILL THE REST IN
         }
     }

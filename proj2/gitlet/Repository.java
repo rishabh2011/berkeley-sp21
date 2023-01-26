@@ -1,7 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 
@@ -71,9 +70,8 @@ public class Repository {
         setupPersistence();
 
         //Initialize repo with first commit //
-        Date d = new Date(0);
-        Commit newCommit = new Commit("Initial message", null, d, null, null);
-        storeCommitObject(newCommit);
+        Commit newCommit = new Commit("Initial message", null, new Date(0));
+        saveCommitObject(newCommit);
     }
 
     /**
@@ -92,41 +90,60 @@ public class Repository {
     public void add(String fileName) {
 
         File givenFile = new File(join(CWD, fileName).toString());
-        if(!givenFile.exists()) {
+        if (!givenFile.exists()) {
             message("File does not exist.");
             System.exit(0);
         }
 
-        String givenFileSHAID = sha1(givenFile.toString());
+        //Calcuate given file content SHA-1 id;
+        String givenFileContents = readContentsAsString(givenFile);
+        String givenFileSHAID = sha1(serialize(givenFileContents));
+        //Get the same file's previous content SHA-1 id if it exists
         Commit lastCommit = getLastCommitObject();
         String commitFileSHAID = lastCommit.getFileSHAID(fileName);
 
-        File stagedFile = new File(join(STAGING_DIR, fileName).toString());
-        //File has not been staged
-        if (!stagedFile.exists()) {
-            try { //File has been modified
-                if (!givenFileSHAID.equals(commitFileSHAID)) {
-                    stagedFile.createNewFile();
-                    writeContents(stagedFile, givenFileSHAID);
-                }
-            } catch (IOException e) {
-                message("An error occured while staging file " + fileName + " : ", e);
-            }
-        } else { //File has already been staged
-            //File has been modified
-            if (!givenFileSHAID.equals(commitFileSHAID)) {
-                writeContents(stagedFile, givenFileSHAID);
-            } else { //Remove file from the staging area (Condition 3)
-                restrictedDelete(stagedFile);
-            }
+        //File has been modified / is new
+        if (!givenFileSHAID.equals(commitFileSHAID)) {
+            StagingOperations.stageFile(fileName, givenFileSHAID);
+        } else { //Remove file from the staging area (Condition 3)
+            StagingOperations.removeStagedFile(fileName);
         }
     }
 
+    /**
+     * Create a new commit that tracks files that have been
+     * created/modified/removed as reflected in the staging area
+     *
+     * @param message the message associated with this commit
+     */
     public void commit(String message) {
+        //if message is null abort
+        if (message == null) {
+            message("Please enter a commit message.");
+            System.exit(0);
+        }
 
+        Map<String, String> stagedFiles = StagingOperations.getStagedFiles();
+        //no files staged implies abort
+        if (stagedFiles.size() == 0) {
+            message("No changes added to the commit");
+            System.exit(0);
+        }
 
+        //Create commit object
+        Commit parentCommit = getLastCommitObject();
+        Commit newCommit = new Commit(message, "author", new Date());
+        newCommit.setParentValues(parentCommit);
 
-//        storeCommitObject();
+        //Add files from staging area assigned for addition
+        newCommit.trackStagedFiles(stagedFiles);
+        //Remove files in the staging area assigned for removal
+        newCommit.untrackRemovedFiles(STAGING_DIR);
+
+        saveCommitObject(newCommit);
+
+        //Save staged files to the repository
+        saveFiles(stagedFiles);
     }
 
     // ==================================== HELPER FUNCTIONS =================================== //
@@ -143,6 +160,7 @@ public class Repository {
 
         File stagingDir = new File(STAGING_DIR.toString());
         stagingDir.mkdir();
+        StagingOperations.createStagingFile();
 
         File filesDir = new File(FILE_DIR.toString());
         filesDir.mkdir();
@@ -173,7 +191,7 @@ public class Repository {
      *
      * @param newCommit the commit object that needs to be saved
      */
-    private void storeCommitObject(Commit newCommit) {
+    private void saveCommitObject(Commit newCommit) {
 
         //Calculate commit SHA-1 id
         String commitID = sha1(serialize(newCommit));
@@ -203,6 +221,30 @@ public class Repository {
 
         File commitPath = join(COMMIT_DIR, head.substring(0, 6), head.substring(7));
         return readObject(commitPath, Commit.class);
+    }
+
+    /**
+     * Saves all staged working directory files to the repo
+     * and clears the staging area
+     *
+     * @param stagedFiles list of files added to the staging area
+     */
+    private void saveFiles(Map<String, String> stagedFiles) {
+
+        for (String fileName : stagedFiles.keySet()) {
+            String fileSHAID = stagedFiles.get(fileName);
+            //Make a new folder using the first 6 characters of the fileSHAID
+            File newFolder = new File(join(FILE_DIR, fileSHAID.substring(0, 6)).toString());
+            newFolder.mkdir();
+
+            //Save the working directory file to a new file in the new folder
+            //named using the remaining characters in the fileSHAID
+            String saveFileName = fileSHAID.substring(7);
+            File saveFile = new File(join(newFolder, saveFileName).toString());
+            writeObject(saveFile, serialize(join(CWD, fileName)));
+        }
+        //Clear staging area
+        StagingOperations.clearStagingArea();
     }
 
 //    /**
