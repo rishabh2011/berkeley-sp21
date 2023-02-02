@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static gitlet.Utils.*;
@@ -46,12 +47,6 @@ public class Repository {
      */
     private String head;
     /**
-     * Maps staged file names to their SHA-1 id's <br><br>
-     * Key - File Name <br>
-     * Value - SHA-1 ID <br>
-     */
-    private Map<String, String> stagedFiles;
-    /**
      * Tracks the current branch
      */
     private String currentBranch = "master";
@@ -70,7 +65,7 @@ public class Repository {
         setupPersistence();
 
         //Initialize repo with first commit //
-        Commit newCommit = new Commit("Initial message", null, new Date(0));
+        Commit newCommit = new Commit("initial commit", new Date(0));
         saveCommitObject(newCommit);
     }
 
@@ -99,7 +94,7 @@ public class Repository {
         String givenFileContents = readContentsAsString(givenFile);
         String givenFileSHAID = sha1(serialize(givenFileContents));
         //Get the same file's previous content SHA-1 id if it exists
-        Commit lastCommit = getLastCommitObject();
+        Commit lastCommit = getLatestCommitObject();
         String commitFileSHAID = lastCommit.getFileSHAID(fileName);
 
         //File has been modified / is new
@@ -131,8 +126,8 @@ public class Repository {
         }
 
         //Create commit object
-        Commit parentCommit = getLastCommitObject();
-        Commit newCommit = new Commit(message, "author", new Date());
+        Commit parentCommit = getLatestCommitObject();
+        Commit newCommit = new Commit(message, new Date());
         newCommit.setParentValues(parentCommit);
 
         //Add files from staging area assigned for addition
@@ -144,6 +139,105 @@ public class Repository {
 
         //Save staged files to the repository
         saveFiles(stagedFiles);
+    }
+
+    /**
+     * Checkout:
+     * <br>1. file in head commit</br>
+     * <br>2. file in given commit</br>
+     * <br>3. Branch</br>
+     *
+     * @param args <br>1. (file) </br>
+     *             <br>2. (commit, file)</br>
+     *             <br>3. (branch)</br>
+     */
+    public void checkout(String... args) {
+        switch (args.length - 1) {
+            case 1:
+                checkoutBranch(args[1]);
+                break;
+            case 2:
+                Commit latestCommit = getLatestCommitObject();
+                checkoutFileInCommit(latestCommit, args[2]);
+                break;
+            case 3:
+                //Check folder exists
+                File commitFolder = new File(join(COMMIT_DIR, args[1].substring(0, 6)).toString());
+                if (!commitFolder.exists()) {
+                    message("No commit with that id exists.");
+                    System.exit(0);
+                }
+                //Get the commit file in commit folder
+                List<String> files = plainFilenamesIn(commitFolder);
+                File commitFile = new File(join(commitFolder, files.get(0)).toString());
+                //Load commit object in commitFile
+                Commit commit = readObject(commitFile, Commit.class);
+                checkoutFileInCommit(commit, args[3]);
+                break;
+        }
+    }
+
+    /**
+     * Checkout given file in given commit
+     *
+     * @param commit   the commit from which to check out given file
+     * @param fileName file to check out
+     */
+    private void checkoutFileInCommit(Commit commit, String fileName) {
+        //Get hash id of file from tracked files
+        String fileSHAID = commit.getFileSHAID(fileName);
+
+        //If file doesn't exist
+        if (fileSHAID == null) {
+            message("File does not exist in that commit.");
+            System.exit(0);
+        }
+
+        //Load file data into string from disk
+        File file = new File(join(FILE_DIR, fileSHAID.substring(0, 6),
+                fileSHAID.substring(6)).toString());
+        String fileContents = readContentsAsString(file);
+
+        //Replace CWD with checked out file contents
+        writeContents(join(CWD, fileName), fileContents);
+    }
+
+    /**
+     * Checkout given branch
+     *
+     * @param branchName the branch to check out
+     */
+    private void checkoutBranch(String branchName) {
+
+        //TODO: Finish Checkout Branch
+        //Check Branch exists
+
+        //Check Branch is different from current branch
+
+    }
+
+    /**
+     * Display information on all commits made so far
+     * */
+    public void log() {
+        Commit latestCommit = getLatestCommitObject();
+        latestCommit.printCommitInfo();
+        log(latestCommit.getFirstParentID());
+    }
+
+    /** Recursively iterate through all commits and print relevant info */
+    private void log(String commitID) {
+        if(commitID == null) {
+            return;
+        }
+        //Load commit file from disk
+        File commitFile = new File(join(COMMIT_DIR, commitID.substring(0, 6)
+                , commitID.substring(6)).toString());
+        Commit commit = readObject(commitFile, Commit.class);
+
+        //Display commit info
+        commit.printCommitInfo();
+        log(commit.getFirstParentID());
     }
 
     // ==================================== HELPER FUNCTIONS =================================== //
@@ -160,7 +254,7 @@ public class Repository {
 
         File stagingDir = new File(STAGING_DIR.toString());
         stagingDir.mkdir();
-        StagingOperations.createStagingFile();
+        StagingOperations.createStagingArea();
 
         File filesDir = new File(FILE_DIR.toString());
         filesDir.mkdir();
@@ -203,7 +297,7 @@ public class Repository {
 
         //Save the commit to a new file in the new commit dir
         //named using the remaining characters in the commitID
-        String commitFileName = commitID.substring(7);
+        String commitFileName = commitID.substring(6);
         File commitFile = new File(join(commitDir, commitFileName).toString());
         writeObject(commitFile, newCommit);
 
@@ -211,15 +305,15 @@ public class Repository {
     }
 
     /**
-     * Loads the last committed object in the repo i.e. the latest
+     * Loads the latest committed object in the repo
      *
-     * @return Last commited object
+     * @return Latest commited object
      */
-    private Commit getLastCommitObject() {
+    private Commit getLatestCommitObject() {
         File headFile = new File(join(REF_DIR, "HEAD").toString());
         head = readContentsAsString(headFile);
 
-        File commitPath = join(COMMIT_DIR, head.substring(0, 6), head.substring(7));
+        File commitPath = join(COMMIT_DIR, head.substring(0, 6), head.substring(6));
         return readObject(commitPath, Commit.class);
     }
 
@@ -239,9 +333,12 @@ public class Repository {
 
             //Save the working directory file to a new file in the new folder
             //named using the remaining characters in the fileSHAID
-            String saveFileName = fileSHAID.substring(7);
+            String saveFileName = fileSHAID.substring(6);
             File saveFile = new File(join(newFolder, saveFileName).toString());
-            writeObject(saveFile, serialize(join(CWD, fileName)));
+
+            //Save CWD file contents to the newly created save file
+            String fileContents = readContentsAsString(join(CWD, fileName));
+            writeContents(saveFile, fileContents);
         }
         //Clear staging area
         StagingOperations.clearStagingArea();

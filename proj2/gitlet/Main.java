@@ -26,6 +26,11 @@ public class Main {
             case "commit":
                 gitlet.commit(args[1]);
                 break;
+            case "checkout":
+                gitlet.checkout(args);
+                break;
+            case "log":
+                gitlet.log();
             // TODO: FILL THE REST IN
         }
     }

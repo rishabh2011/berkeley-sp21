@@ -4,10 +4,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Date; // TODO: You'll likely use this in this class
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static gitlet.Utils.join;
 import static gitlet.Utils.plainFilenamesIn;
@@ -23,8 +20,6 @@ public class Commit implements Serializable, Dumpable {
     private String message;
     /** The SHA-1 id of the current commit */
     private String id;
-    /** The name of the commiter */
-    private String authorName;
     /** The date and time the commit was made */
     private Date d;
     /** Maps tracked file names to their SHA-1 id's <br><br>
@@ -40,12 +35,10 @@ public class Commit implements Serializable, Dumpable {
     /** Create a new commit object with the given values
      *
      * @param message the message associated with this commit
-     * @param authorName name of the author commiting
      * @param d date of commit
      * */
-    public Commit(String message, String authorName, Date d){
+    public Commit(String message, Date d){
         this.message = message;
-        this.authorName = authorName;
         this.d = d;
     }
 
@@ -106,12 +99,36 @@ public class Commit implements Serializable, Dumpable {
         return id;
     }
 
+    /** Returns the first parent SHA-1 ID of this commit
+     *
+     * @return SHA-1 ID
+     * */
+    public String getFirstParentID() {
+        return firstParentID;
+    }
+
     /** Returns the trackedFiles map ds of this commit
      *
      * @return trackedFiles map ds
      * */
     public Map<String, String> getTrackedFiles() {
         return trackedFiles;
+    }
+
+    /** Prints all relevant information about this commit */
+    public void printCommitInfo() {
+        System.out.println("===");
+        System.out.println("commit " + id);
+
+        //Format Date
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        String formattedDate = String.format("%1$ta %1$tb %1$te %1$TT %1$TY %1$tz", c);
+        //Print formatted date
+        System.out.println("Date: " + formattedDate);
+
+        System.out.println(message);
+        System.out.println();
     }
 
     @Override
