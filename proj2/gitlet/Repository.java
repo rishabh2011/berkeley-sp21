@@ -38,6 +38,10 @@ public class Repository {
      */
     static final File STAGING_DIR = join(GITLET_DIR, "staging");
     /**
+     * The Staging Area File Copy Directory
+     */
+    static final File STAGED_COPY = join(STAGING_DIR, "File Copies");
+    /**
      * The refs directory
      * (Contains refs such as current head commit, branch commit refs such as master)
      */
@@ -174,6 +178,8 @@ public class Repository {
                 Commit commit = readObject(commitFile, Commit.class);
                 checkoutFileInCommit(commit, args[3]);
                 break;
+            default:
+                break;
         }
     }
 
@@ -218,21 +224,23 @@ public class Repository {
 
     /**
      * Display information on all commits made so far
-     * */
+     */
     public void log() {
         Commit latestCommit = getLatestCommitObject();
         latestCommit.printCommitInfo();
         log(latestCommit.getFirstParentID());
     }
 
-    /** Recursively iterate through all commits and print relevant info */
+    /**
+     * Recursively iterate through all commits and print relevant info
+     */
     private void log(String commitID) {
-        if(commitID == null) {
+        if (commitID == null) {
             return;
         }
         //Load commit file from disk
-        File commitFile = new File(join(COMMIT_DIR, commitID.substring(0, 6)
-                , commitID.substring(6)).toString());
+        File commitFile = new File(join(COMMIT_DIR, commitID.substring(0, 6),
+                commitID.substring(6)).toString());
         Commit commit = readObject(commitFile, Commit.class);
 
         //Display commit info
@@ -331,13 +339,11 @@ public class Repository {
             File newFolder = new File(join(FILE_DIR, fileSHAID.substring(0, 6)).toString());
             newFolder.mkdir();
 
-            //Save the working directory file to a new file in the new folder
+            //Save the staged copy of the working directory file to a new file in a new folder
             //named using the remaining characters in the fileSHAID
             String saveFileName = fileSHAID.substring(6);
             File saveFile = new File(join(newFolder, saveFileName).toString());
-
-            //Save CWD file contents to the newly created save file
-            String fileContents = readContentsAsString(join(CWD, fileName));
+            String fileContents = readContentsAsString(join(STAGED_COPY, fileName));
             writeContents(saveFile, fileContents);
         }
         //Clear staging area

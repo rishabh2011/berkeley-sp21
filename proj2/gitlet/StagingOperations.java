@@ -109,8 +109,8 @@ public class StagingOperations implements Serializable, Dumpable {
 
         //Delete Files in staging area
         List<String> filesInStagingArea = plainFilenamesIn(COPY_DIR);
-        if(filesInStagingArea.size() > 0) {
-            for(String fileName : filesInStagingArea) {
+        if (filesInStagingArea.size() > 0) {
+            for (String fileName : filesInStagingArea) {
                 File file = new File(COPY_DIR, fileName);
                 file.delete();
             }
