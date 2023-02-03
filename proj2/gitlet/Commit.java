@@ -1,12 +1,10 @@
 package gitlet;
 
-// TODO: any imports you need here
-
-import java.io.File;
 import java.io.Serializable;
-import java.util.Date;
-import java.util.Map;
+import java.util.List;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Date;
 import java.util.Calendar;
 
 /**
@@ -72,23 +70,23 @@ public class Commit implements Serializable, Dumpable {
     /**
      * Tracks the files added in the staging area
      *
-     * @param stagedFiles Map of files and their respective SHA-1 id staged for tracking
+     * @param filesStagedForAddition Map representing files staged for addition
      */
-    public void trackStagedFiles(Map<String, String> stagedFiles) {
-        for (String fileName : stagedFiles.keySet()) {
-            trackedFiles.put(fileName, stagedFiles.get(fileName));
+    public void trackStagedFiles(Map<String, String> filesStagedForAddition) {
+        for (String fileName : filesStagedForAddition.keySet()) {
+            trackedFiles.put(fileName, filesStagedForAddition.get(fileName));
         }
     }
-
-    //TODO: Write the function
 
     /**
      * Untracks the files deleted by gitlet.Main rm command
      *
-     * @param stagingDir staging area directory path
+     * @param filesStagedForRemoval List representing files staged for removal
      */
-    public void untrackRemovedFiles(File stagingDir) {
-
+    public void untrackRemovedFiles(List<String> filesStagedForRemoval) {
+        for (String fileName : filesStagedForRemoval) {
+            trackedFiles.remove(fileName);
+        }
     }
 
     /**

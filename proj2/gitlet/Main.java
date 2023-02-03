@@ -3,7 +3,7 @@ package gitlet;
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
- * @author TODO
+ * @author Rishabh Choudhury
  */
 public class Main {
 
@@ -18,6 +18,10 @@ public class Main {
 
         String firstArg = args[0];
         Repository gitlet = new Repository();
+        //Check repo has been created first
+        if (!firstArg.equals("init")) {
+            gitlet.checkRepoExists();
+        }
 
         switch (firstArg) {
             case "init":
@@ -34,6 +38,9 @@ public class Main {
                 break;
             case "log":
                 gitlet.log();
+                break;
+            case "rm":
+                gitlet.rm(args[1]);
                 break;
             default:
                 break;

@@ -2,8 +2,9 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.Map;
 
 import static gitlet.Repository.CWD;
@@ -26,7 +27,7 @@ public class StagingOperations implements Serializable, Dumpable {
     /**
      * Copy directory for storing copies of CWD files
      */
-    static final File COPY_DIR = new File(join(STAGING_DIR,
+    static final File STAGED_COPY_DIR = new File(join(STAGING_DIR,
             "File Copies").toString());
 
     /**
@@ -39,7 +40,7 @@ public class StagingOperations implements Serializable, Dumpable {
      * References files that should be untracked
      * next commit onwards
      */
-    private Map<String, String> untrackFiles = new HashMap<>();
+    private List<String> untrackFiles = new LinkedList<>();
 
     /**
      * Creates a new staging file
@@ -50,24 +51,35 @@ public class StagingOperations implements Serializable, Dumpable {
         saveStagedFile(sa);
 
         //Create directory for storing copies of CWD files
-        COPY_DIR.mkdir();
+        STAGED_COPY_DIR.mkdir();
     }
 
     /**
      * Copies given file to the staging area and marks
      * it for tracking
      *
-     * @param fileName  the file that should be staged
+     * @param fileName  the file that should be staged for addition
      * @param fileSHAID sha-id corresponding to the given file
      */
-    public static void stageFile(String fileName, String fileSHAID) {
+    public static void stageFileForAddition(String fileName, String fileSHAID) {
         StagingOperations stageOps = loadStagedFile();
         stageOps.trackFiles.put(fileName, fileSHAID);
         saveStagedFile(stageOps);
 
         //Copy CWD file to Staged Files Directory
         String fileContents = readContentsAsString(join(CWD, fileName));
-        writeContents(new File(COPY_DIR, fileName), fileContents);
+        writeContents(new File(STAGED_COPY_DIR, fileName), fileContents);
+    }
+
+    /**
+     * Stages the given file for removal next commit onwards
+     *
+     * @param fileName the file that should be staged for removal
+     */
+    public static void stageFileForRemoval(String fileName) {
+        StagingOperations stageOps = loadStagedFile();
+        stageOps.untrackFiles.add(fileName);
+        saveStagedFile(stageOps);
     }
 
     /**
@@ -84,18 +96,28 @@ public class StagingOperations implements Serializable, Dumpable {
         //Save to disk
         saveStagedFile(stageOps);
         //Delete File
-        File file = new File(COPY_DIR, fileName);
+        File file = new File(STAGED_COPY_DIR, fileName);
         file.delete();
     }
 
     /**
-     * Returns a map representing all staged files and their corresponding SHA-ids
+     * Returns all files staged for addition
      *
-     * @return staged files
+     * @return files staged for addition
      */
-    public static Map<String, String> getStagedFiles() {
+    public static Map<String, String> getFilesStagedForAddition() {
         StagingOperations stageOps = loadStagedFile();
         return stageOps.trackFiles;
+    }
+
+    /**
+     * Returns all files staged for removal
+     *
+     * @return files staged for removal
+     */
+    public static List<String> getFilesStagedForRemoval() {
+        StagingOperations stageOps = loadStagedFile();
+        return stageOps.untrackFiles;
     }
 
     /**
@@ -108,10 +130,10 @@ public class StagingOperations implements Serializable, Dumpable {
         saveStagedFile(stageOps);
 
         //Delete Files in staging area
-        List<String> filesInStagingArea = plainFilenamesIn(COPY_DIR);
+        List<String> filesInStagingArea = plainFilenamesIn(STAGED_COPY_DIR);
         if (filesInStagingArea.size() > 0) {
             for (String fileName : filesInStagingArea) {
-                File file = new File(COPY_DIR, fileName);
+                File file = new File(STAGED_COPY_DIR, fileName);
                 file.delete();
             }
         }

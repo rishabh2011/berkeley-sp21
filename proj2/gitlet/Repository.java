@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import static gitlet.Utils.*;
-
-// TODO: any imports you need here
+import static gitlet.StagingOperations.STAGED_COPY_DIR;
 
 /**
  * Represents a gitlet repository.
@@ -38,10 +37,6 @@ public class Repository {
      */
     static final File STAGING_DIR = join(GITLET_DIR, "staging");
     /**
-     * The Staging Area File Copy Directory
-     */
-    static final File STAGED_COPY = join(STAGING_DIR, "File Copies");
-    /**
      * The refs directory
      * (Contains refs such as current head commit, branch commit refs such as master)
      */
@@ -54,6 +49,8 @@ public class Repository {
      * Tracks the current branch
      */
     private String currentBranch = "master";
+
+    // ----------------------------- INIT ------------------------------ //
 
     /**
      * Creates a new Gitlet version-control system ion the current directory.
@@ -72,6 +69,8 @@ public class Repository {
         Commit newCommit = new Commit("initial commit", new Date(0));
         saveCommitObject(newCommit);
     }
+
+    // ------------------------------ ADD ------------------------------ //
 
     /**
      * Add given file to the staging area <br><br>
@@ -103,11 +102,13 @@ public class Repository {
 
         //File has been modified / is new
         if (!givenFileSHAID.equals(commitFileSHAID)) {
-            StagingOperations.stageFile(fileName, givenFileSHAID);
+            StagingOperations.stageFileForAddition(fileName, givenFileSHAID);
         } else { //Remove file from the staging area (Condition 3)
             StagingOperations.removeStagedFile(fileName);
         }
     }
+
+    // ------------------------------- COMMIT ------------------------------ //
 
     /**
      * Create a new commit that tracks files that have been
@@ -116,34 +117,34 @@ public class Repository {
      * @param message the message associated with this commit
      */
     public void commit(String message) {
+
         //if message is null abort
         if (message == null) {
             message("Please enter a commit message.");
             System.exit(0);
         }
 
-        Map<String, String> stagedFiles = StagingOperations.getStagedFiles();
-        //no files staged implies abort
-        if (stagedFiles.size() == 0) {
+        Map<String, String> filesStagedForAddition = StagingOperations.getFilesStagedForAddition();
+        List<String> filesStagedForRemoval = StagingOperations.getFilesStagedForRemoval();
+        //no files staged
+        if (filesStagedForAddition.size() == 0 && filesStagedForRemoval.size() == 0) {
             message("No changes added to the commit");
             System.exit(0);
         }
 
-        //Create commit object
+        //Create and save commit
         Commit parentCommit = getLatestCommitObject();
         Commit newCommit = new Commit(message, new Date());
         newCommit.setParentValues(parentCommit);
-
-        //Add files from staging area assigned for addition
-        newCommit.trackStagedFiles(stagedFiles);
-        //Remove files in the staging area assigned for removal
-        newCommit.untrackRemovedFiles(STAGING_DIR);
-
+        newCommit.trackStagedFiles(filesStagedForAddition);
+        newCommit.untrackRemovedFiles(filesStagedForRemoval);
         saveCommitObject(newCommit);
 
         //Save staged files to the repository
-        saveFiles(stagedFiles);
+        saveFiles(filesStagedForAddition);
     }
+
+    // ---------------------------------- CHECKOUT ------------------------------ //
 
     /**
      * Checkout:
@@ -156,6 +157,7 @@ public class Repository {
      *             <br>3. (branch)</br>
      */
     public void checkout(String... args) {
+
         switch (args.length - 1) {
             case 1:
                 checkoutBranch(args[1]);
@@ -215,12 +217,29 @@ public class Repository {
      */
     private void checkoutBranch(String branchName) {
 
-        //TODO: Finish Checkout Branch
+        //TODO: Finish function
+
         //Check Branch exists
+        List<String> branchList = plainFilenamesIn(REF_DIR);
+        if (!branchList.contains(branchName)) {
+            message("File does not exist in that commit");
+            System.exit(0);
+        }
 
         //Check Branch is different from current branch
 
+
+        //Replace files in the CWD with versions tracked
+        // by the checked out branch
+
+        //Delete files from the CWD tracked by the current branch
+        //but are not tracked by the checked out branch
+
+        //Make checked out branch, the current branch
+
     }
+
+    // ------------------------------- LOG ------------------------------ //
 
     /**
      * Display information on all commits made so far
@@ -248,7 +267,50 @@ public class Repository {
         log(commit.getFirstParentID());
     }
 
+    // ------------------------------- RM ------------------------------ //
+
+    public void rm(String fileName) {
+
+        boolean fileStaged = StagingOperations.getFilesStagedForAddition().containsKey(fileName);
+        boolean fileTracked = getLatestCommitObject().getTrackedFiles().containsKey(fileName);
+        //File is neither staged nor tracked in the latest commit
+        if (!fileStaged && !fileTracked) {
+            message("No reason to remove the file.");
+            System.exit(0);
+        }
+
+        //Unstage file if it has been staged for addition
+        if (fileStaged) {
+            StagingOperations.removeStagedFile(fileName);
+        }
+
+        //Stage file for removal if tracked by latest commit
+        if (fileTracked) {
+            StagingOperations.stageFileForRemoval(fileName);
+        }
+
+        //Remove file from CWD if not removed by user already
+        File file = new File(join(CWD, fileName).toString());
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
     // ==================================== HELPER FUNCTIONS =================================== //
+
+    /**
+     * Checks if a gitlet repository has been made
+     * and informs the user to make one first if it doesn't exist
+     */
+    public void checkRepoExists() {
+        File gitletDir = new File(GITLET_DIR.toString());
+        //Check repo exists
+        if (!gitletDir.exists()) {
+            message("No gitlet repository exists. Please create a repository first using"
+                    + " the \"java gitlet.Main init\" command");
+            System.exit(0);
+        }
+    }
 
     /**
      * Creates all the required gitlet repo directories
@@ -343,7 +405,7 @@ public class Repository {
             //named using the remaining characters in the fileSHAID
             String saveFileName = fileSHAID.substring(6);
             File saveFile = new File(join(newFolder, saveFileName).toString());
-            String fileContents = readContentsAsString(join(STAGED_COPY, fileName));
+            String fileContents = readContentsAsString(join(STAGED_COPY_DIR, fileName));
             writeContents(saveFile, fileContents);
         }
         //Clear staging area
