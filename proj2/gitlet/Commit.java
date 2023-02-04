@@ -32,7 +32,7 @@ public class Commit implements Serializable, Dumpable {
      * Key - File Name <br>
      * Value - SHA-1 ID <br>
      */
-    private Map<String, String> trackedFiles = new HashMap<>();
+    Map<String, String> trackedFiles = new HashMap<>();
     /**
      * The SHA-1 id of the first parent
      */
@@ -61,7 +61,7 @@ public class Commit implements Serializable, Dumpable {
      */
     public void setParentValues(Commit parentCommit) {
         //Copy all map contents
-        trackedFiles = parentCommit.getTrackedFiles();
+        trackedFiles = parentCommit.trackedFiles;
 
         //Set ParentID
         firstParentID = parentCommit.getID();
@@ -125,16 +125,7 @@ public class Commit implements Serializable, Dumpable {
     public String getFirstParentID() {
         return firstParentID;
     }
-
-    /**
-     * Returns the trackedFiles map ds of this commit
-     *
-     * @return trackedFiles map ds
-     */
-    public Map<String, String> getTrackedFiles() {
-        return trackedFiles;
-    }
-
+    
     /**
      * Prints all relevant information about this commit
      */

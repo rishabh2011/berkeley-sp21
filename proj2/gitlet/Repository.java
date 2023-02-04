@@ -171,17 +171,7 @@ public class Repository {
                 checkoutFileInCommit(latestCommit, args[2]);
                 break;
             case 3:
-                //Check folder exists
-                File commitFolder = new File(join(COMMIT_DIR, args[1].substring(0, 6)).toString());
-                if (!commitFolder.exists()) {
-                    message("No commit with that id exists.");
-                    System.exit(0);
-                }
-                //Get the commit file in commit folder
-                List<String> files = plainFilenamesIn(commitFolder);
-                File commitFile = new File(join(commitFolder, files.get(0)).toString());
-                //Load commit object in commitFile
-                Commit commit = readObject(commitFile, Commit.class);
+                Commit commit = getCommitObjectWithID(args[1]);
                 checkoutFileInCommit(commit, args[3]);
                 break;
             default:
@@ -210,7 +200,7 @@ public class Repository {
                 fileSHAID.substring(6)).toString());
         String fileContents = readContentsAsString(file);
 
-        //Replace CWD with checked out file contents
+        //Replace CWD with checked out file contents / create new
         writeContents(join(CWD, fileName), fileContents);
     }
 
@@ -221,25 +211,62 @@ public class Repository {
      */
     private void checkoutBranch(String branchName) {
 
-        //TODO: Finish function
-
         //Check Branch exists
-        List<String> branchList = plainFilenamesIn(REF_DIR);
+        List<String> branchList = plainFilenamesIn(BRANCH_DIR);
         if (!branchList.contains(branchName)) {
-            message("File does not exist in that commit");
+            message("No such branch exists.");
             System.exit(0);
         }
 
         //Check Branch is different from current branch
+        loadCurrentBranch();
+        if (currentBranch.equals(branchName)) {
+            message("No need to checkout the current branch.");
+            System.exit(0);
+        }
+
+        Commit latestCommit = getLatestCommitObject();
+        //Check any working untracked files exist
+        List<String> filesInCWD = plainFilenamesIn(CWD);
+        if (filesInCWD != null) {
+            for (String fileName : filesInCWD) {
+                if (!latestCommit.trackedFiles.containsKey(fileName)) {
+                    message("There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
 
         //Replace files in the CWD with versions tracked
         // by the checked out branch
+        File branchFile = new File(BRANCH_DIR, branchName);
+        String branchCommitID = readContentsAsString(branchFile);
+        Commit branchCommit = getCommitObjectWithID(branchCommitID);
+        for (String fileName : branchCommit.trackedFiles.keySet()) {
+            checkoutFileInCommit(branchCommit, fileName);
+        }
 
         //Delete files from the CWD tracked by the current branch
-        //but are not tracked by the checked out branch
+        //but not tracked by the checked out branch
+        for (String fileName : latestCommit.trackedFiles.keySet()) {
+            if (!branchCommit.trackedFiles.containsKey(fileName)) {
+                File file = new File(CWD, fileName);
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
+        }
 
         //Make checked out branch, the current branch
+        currentBranch = branchName;
+        saveCurrentBranchFile();
 
+        //Update head ref to point to this branch
+        saveHeadRef(branchCommitID);
+
+        //Clear staging area
+        StagingOperations.clearStagingArea();
     }
 
     // ------------------------------- LOG ------------------------------ //
@@ -281,7 +308,7 @@ public class Repository {
     public void rm(String fileName) {
 
         boolean fileStaged = StagingOperations.getFilesStagedForAddition().containsKey(fileName);
-        boolean fileTracked = getLatestCommitObject().getTrackedFiles().containsKey(fileName);
+        boolean fileTracked = getLatestCommitObject().trackedFiles.containsKey(fileName);
         //File is neither staged nor tracked in the latest commit
         if (!fileStaged && !fileTracked) {
             message("No reason to remove the file.");
@@ -311,6 +338,7 @@ public class Repository {
      * Display the current status of the git repository
      */
     public void status() {
+
 
     }
 
@@ -409,6 +437,14 @@ public class Repository {
     }
 
     /**
+     * Loads the current branch value into the currentBranch variable
+     */
+    private void loadCurrentBranch() {
+        File currentBranchFile = new File(join(REF_DIR, "current branch").toString());
+        currentBranch = readContentsAsString(currentBranchFile);
+    }
+
+    /**
      * Updates and saves the head ref
      * to point to the latest commit
      *
@@ -428,9 +464,8 @@ public class Repository {
         File headFile = new File(join(REF_DIR, "HEAD").toString());
         head = readContentsAsString(headFile);
 
-        File currentBranchFile = new File(join(REF_DIR, "current branch").toString());
-        String branchName = readContentsAsString(currentBranchFile);
-        File branchFile = new File(join(BRANCH_DIR, branchName).toString());
+        loadCurrentBranch();
+        File branchFile = new File(join(BRANCH_DIR, currentBranch).toString());
         writeContents(branchFile, head);
     }
 
@@ -452,7 +487,8 @@ public class Repository {
             //named using the remaining characters in the fileSHAID
             String saveFileName = fileSHAID.substring(6);
             File saveFile = new File(join(newFolder, saveFileName).toString());
-            String fileContents = readContentsAsString(join(StagingOperations.STAGED_COPY_DIR, fileName));
+            String fileContents = readContentsAsString(join(StagingOperations.STAGED_COPY_DIR,
+                    fileName));
             writeContents(saveFile, fileContents);
         }
         //Clear staging area
@@ -470,5 +506,25 @@ public class Repository {
 
         File commitPath = join(COMMIT_DIR, head.substring(0, 6), head.substring(6));
         return readObject(commitPath, Commit.class);
+    }
+
+    /**
+     * Loads the commit object defined by the commit id
+     *
+     * @param commitID the id of the commit that needs to be loaded
+     */
+    private static Commit getCommitObjectWithID(String commitID) {
+        //Check folder exists
+        File commitFolder = new File(join(COMMIT_DIR, commitID.substring(0, 6)).toString());
+        if (!commitFolder.exists()) {
+            message("No commit with that id exists.");
+            System.exit(0);
+        }
+        //Get the commit file in commit folder
+        List<String> files = plainFilenamesIn(commitFolder);
+        File commitFile = new File(join(commitFolder, files.get(0)).toString());
+        //Load commit object in commitFile
+        Commit commit = readObject(commitFile, Commit.class);
+        return commit;
     }
 }
