@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import static gitlet.Utils.*;
-import static gitlet.StagingOperations.STAGED_COPY_DIR;
 
 /**
  * Represents a gitlet repository.
@@ -38,9 +37,14 @@ public class Repository {
     static final File STAGING_DIR = join(GITLET_DIR, "staging");
     /**
      * The refs directory
-     * (Contains refs such as current head commit, branch commit refs such as master)
+     * (Contains refs such as current head commit, current branch commit
+     * and the branch directory)
      */
     static final File REF_DIR = join(GITLET_DIR, "refs");
+    /**
+     * The Branch Directory
+     */
+    static final File BRANCH_DIR = join(REF_DIR, "branches");
     /**
      * Points to the latest commit in the current branch
      */
@@ -228,7 +232,6 @@ public class Repository {
 
         //Check Branch is different from current branch
 
-
         //Replace files in the CWD with versions tracked
         // by the checked out branch
 
@@ -269,6 +272,12 @@ public class Repository {
 
     // ------------------------------- RM ------------------------------ //
 
+    /**
+     * Removes the given file from the CWD if it exists
+     * and stops tracking file in further commits
+     *
+     * @param fileName the file that should be removed and untracked in the repo
+     */
     public void rm(String fileName) {
 
         boolean fileStaged = StagingOperations.getFilesStagedForAddition().containsKey(fileName);
@@ -294,6 +303,35 @@ public class Repository {
         if (file.exists()) {
             file.delete();
         }
+    }
+
+    // ------------------------------- STATUS ------------------------------ //
+
+    /**
+     * Display the current status of the git repository
+     */
+    public void status() {
+
+    }
+
+    // ------------------------------- BRANCH ------------------------------ //
+
+    /**
+     * Creates a new branch with the given name
+     *
+     * @param branchName the name of the branch to be created
+     */
+    public void branch(String branchName) {
+        //Branch with given name already exists
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        if (branches.contains(branchName)) {
+            message("A branch with that name already exists.");
+            System.exit(0);
+        }
+
+        currentBranch = branchName;
+        saveCurrentBranchFile();
+        saveCurrentBranchRef();
     }
 
     // ==================================== HELPER FUNCTIONS =================================== //
@@ -331,23 +369,10 @@ public class Repository {
 
         File refsDir = new File(REF_DIR.toString());
         refsDir.mkdir();
-    }
+        saveCurrentBranchFile();
 
-    /**
-     * Updates the head ref and
-     * the currently tracked branch
-     * to point to the current commit
-     *
-     * @param commitID the id of the latest commit to which head should point
-     */
-    private void updateRefs(String commitID) {
-        head = commitID;
-        File headFile = new File(join(REF_DIR, "HEAD").toString());
-        writeContents(headFile, head);
-
-        // Update the currently tracked branch
-        File branchFile = new File(join(REF_DIR, currentBranch).toString());
-        writeContents(branchFile, head);
+        File branchDir = new File(BRANCH_DIR.toString());
+        branchDir.mkdir();
     }
 
     /**
@@ -371,20 +396,42 @@ public class Repository {
         File commitFile = new File(join(commitDir, commitFileName).toString());
         writeObject(commitFile, newCommit);
 
-        updateRefs(commitID);
+        saveHeadRef(commitID);
+        saveCurrentBranchRef();
     }
 
     /**
-     * Loads the latest committed object in the repo
-     *
-     * @return Latest commited object
+     * Saves the value of the current branch
      */
-    private Commit getLatestCommitObject() {
+    private void saveCurrentBranchFile() {
+        File currentBranchFile = new File(REF_DIR, "current branch");
+        writeContents(currentBranchFile, currentBranch);
+    }
+
+    /**
+     * Updates and saves the head ref
+     * to point to the latest commit
+     *
+     * @param commitID the id of the latest commit to which head should point
+     */
+    private void saveHeadRef(String commitID) {
+        head = commitID;
+        File headFile = new File(join(REF_DIR, "HEAD").toString());
+        writeContents(headFile, head);
+    }
+
+    /**
+     * Updates and saves the currently tracked branch ref
+     * to point to the latest commit
+     */
+    private void saveCurrentBranchRef() {
         File headFile = new File(join(REF_DIR, "HEAD").toString());
         head = readContentsAsString(headFile);
 
-        File commitPath = join(COMMIT_DIR, head.substring(0, 6), head.substring(6));
-        return readObject(commitPath, Commit.class);
+        File currentBranchFile = new File(join(REF_DIR, "current branch").toString());
+        String branchName = readContentsAsString(currentBranchFile);
+        File branchFile = new File(join(BRANCH_DIR, branchName).toString());
+        writeContents(branchFile, head);
     }
 
     /**
@@ -405,29 +452,23 @@ public class Repository {
             //named using the remaining characters in the fileSHAID
             String saveFileName = fileSHAID.substring(6);
             File saveFile = new File(join(newFolder, saveFileName).toString());
-            String fileContents = readContentsAsString(join(STAGED_COPY_DIR, fileName));
+            String fileContents = readContentsAsString(join(StagingOperations.STAGED_COPY_DIR, fileName));
             writeContents(saveFile, fileContents);
         }
         //Clear staging area
         StagingOperations.clearStagingArea();
     }
 
-//    /**
-//     * Returns the SHA-1 ID of the given file
-//     *
-//     * @param fileName the file whose SHA-1 ID is required
-//     * @return SHA-1 ID of the given file
-//     */
-//    private String getFileSHAID(String fileName) {
-//        return Utils.sha1(Utils.serialize(Utils.join(CWD, fileName).toString()));
-//    }
+    /**
+     * Loads the latest committed object in the repo
+     *
+     * @return Latest commited object
+     */
+    private Commit getLatestCommitObject() {
+        File headFile = new File(join(REF_DIR, "HEAD").toString());
+        head = readContentsAsString(headFile);
 
-//    /** Creates a new branch
-//     *
-//     * @param name the name of the new branch to be created
-//     * */
-//    private void createBranch(String name){
-//        File branchFile = new File(Utils.join(REF_DIR, name).toString());
-//        Utils.writeObject(branchFile, head);
-//    }
+        File commitPath = join(COMMIT_DIR, head.substring(0, 6), head.substring(6));
+        return readObject(commitPath, Commit.class);
+    }
 }

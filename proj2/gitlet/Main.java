@@ -42,6 +42,9 @@ public class Main {
             case "rm":
                 gitlet.rm(args[1]);
                 break;
+            case "branch":
+                gitlet.branch(args[1]);
+                break;
             default:
                 break;
             // TODO: FILL THE REST IN
