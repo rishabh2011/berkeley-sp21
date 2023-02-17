@@ -32,14 +32,14 @@ public class MyPriorityQueue<Item> implements MinPQ<Item> {
 
     @Override
     public void add(Item x) {
+        if (size == heap.length - 1) {
+            resize(heap.length * 2);
+        }
+
         //add item to last position in heap
         heap[++size] = x;
         //swim item to correct position in heap
         swim(size);
-
-        if (size == heap.length - 1) {
-            resize(heap.length * 2);
-        }
     }
 
     @Override
