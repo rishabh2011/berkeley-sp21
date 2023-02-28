@@ -34,13 +34,13 @@ public class StagingOperations implements Serializable, Dumpable {
      * References files that should be tracked next commit
      * onwards
      */
-    private Map<String, String> trackFiles = new HashMap<>();
+    private Map<String, String> addFiles = new HashMap<>();
 
     /**
      * References files that should be untracked
      * next commit onwards
      */
-    private List<String> untrackFiles = new LinkedList<>();
+    private List<String> removeFiles = new LinkedList<>();
 
     /**
      * Creates a new staging file
@@ -59,11 +59,11 @@ public class StagingOperations implements Serializable, Dumpable {
      * it for tracking
      *
      * @param fileName  the file that should be staged for addition
-     * @param fileSHAID sha-id corresponding to the given file
+     * @param fileID sha-id corresponding to the given file
      */
-    public static void stageFileForAddition(String fileName, String fileSHAID) {
+    public static void stageFileForAddition(String fileName, String fileID) {
         StagingOperations stageOps = loadStagedFile();
-        stageOps.trackFiles.put(fileName, fileSHAID);
+        stageOps.addFiles.put(fileName, fileID);
         saveStagedFile(stageOps);
 
         //Copy CWD file to Staged Files Directory
@@ -78,7 +78,7 @@ public class StagingOperations implements Serializable, Dumpable {
      */
     public static void stageFileForRemoval(String fileName) {
         StagingOperations stageOps = loadStagedFile();
-        stageOps.untrackFiles.add(fileName);
+        stageOps.removeFiles.add(fileName);
         saveStagedFile(stageOps);
     }
 
@@ -88,14 +88,10 @@ public class StagingOperations implements Serializable, Dumpable {
      *
      * @param fileName the staged file that should be removed
      */
-    public static void removeStagedFile(String fileName) {
-        //Load data
+    public static void removeFromStagingArea(String fileName) {
         StagingOperations stageOps = loadStagedFile();
-        //Modify
-        stageOps.trackFiles.remove(fileName);
-        //Save to disk
+        stageOps.addFiles.remove(fileName);
         saveStagedFile(stageOps);
-        //Delete File
         File file = new File(STAGED_COPY_DIR, fileName);
         file.delete();
     }
@@ -107,7 +103,7 @@ public class StagingOperations implements Serializable, Dumpable {
      */
     public static Map<String, String> getFilesStagedForAddition() {
         StagingOperations stageOps = loadStagedFile();
-        return stageOps.trackFiles;
+        return stageOps.addFiles;
     }
 
     /**
@@ -117,7 +113,7 @@ public class StagingOperations implements Serializable, Dumpable {
      */
     public static List<String> getFilesStagedForRemoval() {
         StagingOperations stageOps = loadStagedFile();
-        return stageOps.untrackFiles;
+        return stageOps.removeFiles;
     }
 
     /**
@@ -126,7 +122,7 @@ public class StagingOperations implements Serializable, Dumpable {
      */
     public static void clearStagingArea() {
         StagingOperations stageOps = loadStagedFile();
-        stageOps.trackFiles.clear();
+        stageOps.addFiles.clear();
         saveStagedFile(stageOps);
 
         //Delete Files in staging area
@@ -161,8 +157,8 @@ public class StagingOperations implements Serializable, Dumpable {
 
     @Override
     public void dump() {
-        for (String key : trackFiles.keySet()) {
-            System.out.println(key + " : " + trackFiles.get(key));
+        for (String key : addFiles.keySet()) {
+            System.out.println(key + " : " + addFiles.get(key));
         }
     }
 }

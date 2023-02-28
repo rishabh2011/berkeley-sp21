@@ -69,9 +69,9 @@ public class Repository {
         }
         setupPersistence();
 
-        //Initialize repo with first commit //
+        //Initialize repo with first commit
         Commit newCommit = new Commit("initial commit", new Date(0));
-        saveCommitObject(newCommit);
+        saveCommit(newCommit);
     }
 
     // ------------------------------ ADD ------------------------------ //
@@ -91,24 +91,25 @@ public class Repository {
      */
     public void add(String fileName) {
 
-        File givenFile = new File(join(CWD, fileName).toString());
-        if (!givenFile.exists()) {
+        File file = new File(join(CWD, fileName).toString());
+        if (!file.exists()) {
             message("File does not exist.");
             System.exit(0);
         }
 
-        //Calcuate given file content SHA-1 id;
-        String givenFileContents = readContentsAsString(givenFile);
-        String givenFileSHAID = sha1(serialize(givenFileContents));
-        //Get the same file's previous content SHA-1 id if it exists
-        Commit lastCommit = getLatestCommitObject();
-        String commitFileSHAID = lastCommit.getFileSHAID(fileName);
+        //Calculate given file ID
+        String fileContent = readContentsAsString(file);
+        String fileID = sha1(serialize(fileContent));
+
+        //HEAD commit file ID
+        Commit headCommit = loadHeadCommit();
+        String commitFileID = headCommit.getFileID(fileName);
 
         //File has been modified / is new
-        if (!givenFileSHAID.equals(commitFileSHAID)) {
-            StagingOperations.stageFileForAddition(fileName, givenFileSHAID);
+        if (!fileID.equals(commitFileID)) {
+            StagingOperations.stageFileForAddition(fileName, fileID);
         } else { //Remove file from the staging area (Condition 3)
-            StagingOperations.removeStagedFile(fileName);
+            StagingOperations.removeFromStagingArea(fileName);
         }
     }
 
@@ -137,12 +138,12 @@ public class Repository {
         }
 
         //Create and save commit
-        Commit parentCommit = getLatestCommitObject();
+        Commit parentCommit = loadHeadCommit();
         Commit newCommit = new Commit(message, new Date());
-        newCommit.setParentValues(parentCommit);
+        newCommit.trackParent(parentCommit);
         newCommit.trackStagedFiles(filesStagedForAddition);
         newCommit.untrackRemovedFiles(filesStagedForRemoval);
-        saveCommitObject(newCommit);
+        saveCommit(newCommit);
 
         //Save staged files to the repository
         saveFiles(filesStagedForAddition);
@@ -167,11 +168,11 @@ public class Repository {
                 checkoutBranch(args[1]);
                 break;
             case 2:
-                Commit latestCommit = getLatestCommitObject();
-                checkoutFileInCommit(latestCommit, args[2]);
+                Commit headCommit = loadHeadCommit();
+                checkoutFileInCommit(headCommit, args[2]);
                 break;
             case 3:
-                Commit commit = getCommitObjectWithID(args[1]);
+                Commit commit = loadCommitWithID(args[1]);
                 checkoutFileInCommit(commit, args[3]);
                 break;
             default:
@@ -186,18 +187,18 @@ public class Repository {
      * @param fileName file to check out
      */
     private void checkoutFileInCommit(Commit commit, String fileName) {
-        //Get hash id of file from tracked files
-        String fileSHAID = commit.getFileSHAID(fileName);
+        //Get ID of file from tracked files
+        String fileID = commit.getFileID(fileName);
 
-        //If file doesn't exist
-        if (fileSHAID == null) {
+        //File doesn't exist
+        if (fileID == null) {
             message("File does not exist in that commit.");
             System.exit(0);
         }
 
         //Load file data into string from disk
-        File file = new File(join(FILE_DIR, fileSHAID.substring(0, 6),
-                fileSHAID.substring(6)).toString());
+        File file = new File(join(FILE_DIR, fileID.substring(0, 6),
+                fileID.substring(6)).toString());
         String fileContents = readContentsAsString(file);
 
         //Replace CWD with checked out file contents / create new
@@ -218,19 +219,20 @@ public class Repository {
             System.exit(0);
         }
 
-        //Check Branch is different from current branch
+        //Check if branch is different from current branch
         loadCurrentBranch();
         if (currentBranch.equals(branchName)) {
             message("No need to checkout the current branch.");
             System.exit(0);
         }
 
-        Commit latestCommit = getLatestCommitObject();
+        Commit headCommit = loadHeadCommit();
         //Check any working untracked files exist
         List<String> filesInCWD = plainFilenamesIn(CWD);
         if (filesInCWD != null) {
             for (String fileName : filesInCWD) {
-                if (!latestCommit.trackedFiles.containsKey(fileName)) {
+                //File not tracked in the latest commit
+                if (!headCommit.trackedFiles.containsKey(fileName)) {
                     message("There is an untracked file in the way; "
                             + "delete it, or add and commit it first.");
                     System.exit(0);
@@ -242,14 +244,14 @@ public class Repository {
         // by the checked out branch
         File branchFile = new File(BRANCH_DIR, branchName);
         String branchCommitID = readContentsAsString(branchFile);
-        Commit branchCommit = getCommitObjectWithID(branchCommitID);
+        Commit branchCommit = loadCommitWithID(branchCommitID);
         for (String fileName : branchCommit.trackedFiles.keySet()) {
             checkoutFileInCommit(branchCommit, fileName);
         }
 
         //Delete files from the CWD tracked by the current branch
         //but not tracked by the checked out branch
-        for (String fileName : latestCommit.trackedFiles.keySet()) {
+        for (String fileName : headCommit.trackedFiles.keySet()) {
             if (!branchCommit.trackedFiles.containsKey(fileName)) {
                 File file = new File(CWD, fileName);
                 if (file.exists()) {
@@ -260,10 +262,10 @@ public class Repository {
 
         //Make checked out branch, the current branch
         currentBranch = branchName;
-        saveCurrentBranchFile();
+        updateCurrentBranch();
 
         //Update head ref to point to this branch
-        saveHeadRef(branchCommitID);
+        updateHeadRef(branchCommitID);
 
         //Clear staging area
         StagingOperations.clearStagingArea();
@@ -275,9 +277,9 @@ public class Repository {
      * Display information on all commits made so far
      */
     public void log() {
-        Commit latestCommit = getLatestCommitObject();
-        latestCommit.printCommitInfo();
-        log(latestCommit.getFirstParentID());
+        Commit headCommit = loadHeadCommit();
+        headCommit.printCommitInfo();
+        log(headCommit.getFirstParentID());
     }
 
     /**
@@ -308,8 +310,8 @@ public class Repository {
     public void rm(String fileName) {
 
         boolean fileStaged = StagingOperations.getFilesStagedForAddition().containsKey(fileName);
-        boolean fileTracked = getLatestCommitObject().trackedFiles.containsKey(fileName);
-        //File is neither staged nor tracked in the latest commit
+        boolean fileTracked = loadHeadCommit().trackedFiles.containsKey(fileName);
+        //File is neither staged nor tracked in the head commit
         if (!fileStaged && !fileTracked) {
             message("No reason to remove the file.");
             System.exit(0);
@@ -317,7 +319,7 @@ public class Repository {
 
         //Unstage file if it has been staged for addition
         if (fileStaged) {
-            StagingOperations.removeStagedFile(fileName);
+            StagingOperations.removeFromStagingArea(fileName);
         }
 
         //Stage file for removal if tracked by latest commit
@@ -358,8 +360,8 @@ public class Repository {
         }
 
         currentBranch = branchName;
-        saveCurrentBranchFile();
-        saveCurrentBranchRef();
+        updateCurrentBranch();
+        updateActiveBranchHeadRef();
     }
 
     // ==================================== HELPER FUNCTIONS =================================== //
@@ -397,18 +399,18 @@ public class Repository {
 
         File refsDir = new File(REF_DIR.toString());
         refsDir.mkdir();
-        saveCurrentBranchFile();
+        updateCurrentBranch();
 
         File branchDir = new File(BRANCH_DIR.toString());
         branchDir.mkdir();
     }
 
     /**
-     * Creates a new commit file and saves the latest commit object to it
+     * Creates a new commit file and saves it
      *
-     * @param newCommit the commit object that needs to be saved
+     * @param newCommit the commit that needs to be saved
      */
-    private void saveCommitObject(Commit newCommit) {
+    private void saveCommit(Commit newCommit) {
 
         //Calculate commit SHA-1 id
         String commitID = sha1(serialize(newCommit));
@@ -424,14 +426,39 @@ public class Repository {
         File commitFile = new File(join(commitDir, commitFileName).toString());
         writeObject(commitFile, newCommit);
 
-        saveHeadRef(commitID);
-        saveCurrentBranchRef();
+        updateHeadRef(commitID);
+        updateActiveBranchHeadRef();
     }
 
     /**
-     * Saves the value of the current branch
+     * Updates and saves the head ref
+     * to point to the latest commit
+     *
+     * @param commitID the id of the latest commit to which head should point
      */
-    private void saveCurrentBranchFile() {
+    private void updateHeadRef(String commitID) {
+        head = commitID;
+        File headFile = new File(join(REF_DIR, "HEAD").toString());
+        writeContents(headFile, head);
+    }
+
+    /**
+     * Updates and saves the currently tracked branch ref
+     * to point to the head commit
+     */
+    private void updateActiveBranchHeadRef() {
+        File headFile = new File(join(REF_DIR, "HEAD").toString());
+        head = readContentsAsString(headFile);
+
+        loadCurrentBranch();
+        File branchFile = new File(join(BRANCH_DIR, currentBranch).toString());
+        writeContents(branchFile, head);
+    }
+
+    /**
+     * Updates current branch variable to point to the active branch and saves it
+     */
+    private void updateCurrentBranch() {
         File currentBranchFile = new File(REF_DIR, "current branch");
         writeContents(currentBranchFile, currentBranch);
     }
@@ -442,31 +469,6 @@ public class Repository {
     private void loadCurrentBranch() {
         File currentBranchFile = new File(join(REF_DIR, "current branch").toString());
         currentBranch = readContentsAsString(currentBranchFile);
-    }
-
-    /**
-     * Updates and saves the head ref
-     * to point to the latest commit
-     *
-     * @param commitID the id of the latest commit to which head should point
-     */
-    private void saveHeadRef(String commitID) {
-        head = commitID;
-        File headFile = new File(join(REF_DIR, "HEAD").toString());
-        writeContents(headFile, head);
-    }
-
-    /**
-     * Updates and saves the currently tracked branch ref
-     * to point to the latest commit
-     */
-    private void saveCurrentBranchRef() {
-        File headFile = new File(join(REF_DIR, "HEAD").toString());
-        head = readContentsAsString(headFile);
-
-        loadCurrentBranch();
-        File branchFile = new File(join(BRANCH_DIR, currentBranch).toString());
-        writeContents(branchFile, head);
     }
 
     /**
@@ -496,11 +498,11 @@ public class Repository {
     }
 
     /**
-     * Loads the latest committed object in the repo
+     * Loads the HEAD commit of the current branch
      *
-     * @return Latest commited object
+     * @return head commit
      */
-    private Commit getLatestCommitObject() {
+    private Commit loadHeadCommit() {
         File headFile = new File(join(REF_DIR, "HEAD").toString());
         head = readContentsAsString(headFile);
 
@@ -509,11 +511,11 @@ public class Repository {
     }
 
     /**
-     * Loads the commit object defined by the commit id
+     * Loads the commit defined by the commit id
      *
      * @param commitID the id of the commit that needs to be loaded
      */
-    private static Commit getCommitObjectWithID(String commitID) {
+    private static Commit loadCommitWithID(String commitID) {
         //Check folder exists
         File commitFolder = new File(join(COMMIT_DIR, commitID.substring(0, 6)).toString());
         if (!commitFolder.exists()) {

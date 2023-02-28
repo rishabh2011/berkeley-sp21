@@ -54,12 +54,12 @@ public class Commit implements Serializable, Dumpable {
     }
 
     /**
-     * Copies existing files tracked by the parent and
-     * stores a reference to the parent ID
+     * Track files being tracked by the parent and
+     * store a reference to the parent ID
      *
      * @param parentCommit the commit that should be a parent of this commit
      */
-    public void setParentValues(Commit parentCommit) {
+    public void trackParent(Commit parentCommit) {
         //Copy all map contents
         trackedFiles = parentCommit.trackedFiles;
 
@@ -104,7 +104,7 @@ public class Commit implements Serializable, Dumpable {
      * @param fileName the file whose SHA id is required
      * @return SHA id of given file
      */
-    public String getFileSHAID(String fileName) {
+    public String getFileID(String fileName) {
         return trackedFiles.get(fileName);
     }
 
