@@ -1,11 +1,7 @@
 package gitlet;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Date;
-import java.util.Calendar;
+import java.util.*;
 
 /**
  * Represents a gitlet commit object.
@@ -32,15 +28,11 @@ public class Commit implements Serializable, Dumpable {
      * Key - File Name <br>
      * Value - SHA-1 ID <br>
      */
-    Map<String, String> trackedFiles = new HashMap<>();
+    Map<String, String> trackedFiles;
     /**
-     * The SHA-1 id of the first parent
+     * The SHA-1 ids of parents
      */
-    private String firstParentID;
-    /**
-     * The SHA-1 id of the second parent (if exists)
-     */
-    private String secondParentID;
+    private LinkedList<String> parentIDs;
 
     /**
      * Create a new commit object with the given values
@@ -51,20 +43,25 @@ public class Commit implements Serializable, Dumpable {
     public Commit(String message, Date d) {
         this.message = message;
         this.d = d;
+        trackedFiles = new HashMap<>();
+        parentIDs = new LinkedList<>();
     }
 
     /**
      * Track files being tracked by the parent and
      * store a reference to the parent ID
      *
-     * @param parentCommit the commit that should be a parent of this commit
+     * @param parentCommits the commits that should be parents of this commit
      */
-    public void trackParent(Commit parentCommit) {
-        //Copy all map contents
-        trackedFiles = parentCommit.trackedFiles;
-
-        //Set ParentID
-        firstParentID = parentCommit.getID();
+    public void trackParent(LinkedList<Commit> parentCommits) {
+        for (Commit commit : parentCommits) {
+            //Copy all map contents
+            for (String file : commit.trackedFiles.keySet()) {
+                trackedFiles.put(file, commit.trackedFiles.get(file));
+            }
+            //Set ParentID
+            parentIDs.addLast(commit.getID());
+        }
     }
 
     /**
@@ -99,6 +96,15 @@ public class Commit implements Serializable, Dumpable {
     }
 
     /**
+     * Returns the date of commit
+     *
+     * @return Date of commit
+     */
+    public Date getDate() {
+        return d;
+    }
+
+    /**
      * Returns the SHA-1 ID of the given fileName
      *
      * @param fileName the file whose SHA id is required
@@ -122,16 +128,25 @@ public class Commit implements Serializable, Dumpable {
      *
      * @return SHA-1 ID
      */
-    public String getFirstParentID() {
-        return firstParentID;
+    public LinkedList<String> getParentIDs() {
+        return parentIDs;
     }
-    
+
     /**
      * Prints all relevant information about this commit
      */
     public void printCommitInfo() {
         System.out.println("===");
         System.out.println("commit " + id);
+
+        //Merge commit
+        if (parentIDs.size() > 1) {
+            System.out.print("Merge: ");
+            for (String id : parentIDs) {
+                System.out.print(id.substring(0, 7) + " ");
+            }
+            System.out.println();
+        }
 
         //Format Date
         Calendar c = Calendar.getInstance();
@@ -142,15 +157,13 @@ public class Commit implements Serializable, Dumpable {
 
         System.out.println(message);
         System.out.println();
-
-        //TODO: Add Merge info functionality
     }
 
     @Override
     public void dump() {
         System.out.println("message : " + message);
         System.out.println("date : " + d);
-        System.out.println("firstParentID : " + firstParentID);
+        System.out.println("firstParentID : " + parentIDs);
 
         for (String key : trackedFiles.keySet()) {
             System.out.println(key + " : " + trackedFiles.get(key));

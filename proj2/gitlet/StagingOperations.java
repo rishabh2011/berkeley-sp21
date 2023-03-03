@@ -45,7 +45,7 @@ public class StagingOperations implements Serializable, Dumpable {
     /**
      * Creates a new staging file
      */
-    public static void createStagingArea() {
+    static void createStagingArea() {
         //Create staging_file
         StagingOperations sa = new StagingOperations();
         saveStagedFile(sa);
@@ -58,10 +58,10 @@ public class StagingOperations implements Serializable, Dumpable {
      * Copies given file to the staging area and marks
      * it for tracking
      *
-     * @param fileName  the file that should be staged for addition
-     * @param fileID sha-id corresponding to the given file
+     * @param fileName the file that should be staged for addition
+     * @param fileID   sha-id corresponding to the given file
      */
-    public static void stageFileForAddition(String fileName, String fileID) {
+    static void stageFileForAddition(String fileName, String fileID) {
         StagingOperations stageOps = loadStagedFile();
         stageOps.addFiles.put(fileName, fileID);
         saveStagedFile(stageOps);
@@ -76,7 +76,7 @@ public class StagingOperations implements Serializable, Dumpable {
      *
      * @param fileName the file that should be staged for removal
      */
-    public static void stageFileForRemoval(String fileName) {
+    static void stageFileForRemoval(String fileName) {
         StagingOperations stageOps = loadStagedFile();
         stageOps.removeFiles.add(fileName);
         saveStagedFile(stageOps);
@@ -88,7 +88,7 @@ public class StagingOperations implements Serializable, Dumpable {
      *
      * @param fileName the staged file that should be removed
      */
-    public static void removeFromStagingArea(String fileName) {
+    static void removeFromStagingArea(String fileName) {
         StagingOperations stageOps = loadStagedFile();
         stageOps.addFiles.remove(fileName);
         saveStagedFile(stageOps);
@@ -101,7 +101,7 @@ public class StagingOperations implements Serializable, Dumpable {
      *
      * @return files staged for addition
      */
-    public static Map<String, String> getFilesStagedForAddition() {
+    static Map<String, String> getFilesStagedForAddition() {
         StagingOperations stageOps = loadStagedFile();
         return stageOps.addFiles;
     }
@@ -111,7 +111,7 @@ public class StagingOperations implements Serializable, Dumpable {
      *
      * @return files staged for removal
      */
-    public static List<String> getFilesStagedForRemoval() {
+    static List<String> getFilesStagedForRemoval() {
         StagingOperations stageOps = loadStagedFile();
         return stageOps.removeFiles;
     }
@@ -120,9 +120,10 @@ public class StagingOperations implements Serializable, Dumpable {
      * Deletes files in the staging area and
      * resets the staging_file
      */
-    public static void clearStagingArea() {
+    static void clearStagingArea() {
         StagingOperations stageOps = loadStagedFile();
         stageOps.addFiles.clear();
+        stageOps.removeFiles.clear();
         saveStagedFile(stageOps);
 
         //Delete Files in staging area

@@ -24,29 +24,16 @@ public class Main {
         }
 
         switch (firstArg) {
-            case "init":
-                gitlet.init();
-                break;
-            case "add":
-                gitlet.add(args[1]);
-                break;
-            case "commit":
-                gitlet.commit(args[1]);
-                break;
-            case "checkout":
-                gitlet.checkout(args);
-                break;
-            case "log":
-                gitlet.log();
-                break;
-            case "rm":
-                gitlet.rm(args[1]);
-                break;
-            case "branch":
-                gitlet.branch(args[1]);
-                break;
-            default:
-                break;
+            case "init" -> gitlet.init();
+            case "add" -> gitlet.add(args[1]);
+            case "commit" -> gitlet.commit(args[1]);
+            case "checkout" -> gitlet.checkout(args);
+            case "log" -> gitlet.log();
+            case "rm" -> gitlet.rm(args[1]);
+            case "branch" -> gitlet.branch(args[1]);
+            case "merge" -> gitlet.merge(args[1]);
+            default -> {
+            }
             // TODO: FILL THE REST IN
         }
     }
