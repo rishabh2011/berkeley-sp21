@@ -105,6 +105,15 @@ public class Commit implements Serializable, Dumpable {
     }
 
     /**
+     * Returns the commit message
+     *
+     * @return commit message
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
      * Returns the SHA-1 ID of the given fileName
      *
      * @param fileName the file whose SHA id is required

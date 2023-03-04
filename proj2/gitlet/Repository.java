@@ -318,38 +318,19 @@ public class Repository {
         }
     }
 
-    // ------------------------------- RM ------------------------------ //
+    // ------------------------------- FIND ------------------------------ //
 
     /**
-     * Removes the given file from the CWD if it exists
-     * and stops tracking file in further commits
-     *
-     * @param fileName the file that should be removed and untracked in the repo
+     * Finds all commits in repository containing the given message
      */
-    public void rm(String fileName) {
-
-        boolean fileStaged = getFilesStagedForAddition().containsKey(fileName);
-        boolean fileTracked = loadHead().trackedFiles.containsKey(fileName);
-        //File is neither staged nor tracked in the head commit
-        if (!fileStaged && !fileTracked) {
-            message("No reason to remove the file.");
-            System.exit(0);
-        }
-
-        //Unstage file if it has been staged for addition
-        if (fileStaged) {
-            removeFromStagingArea(fileName);
-        }
-
-        //Stage file for removal if tracked by latest commit
-        if (fileTracked) {
-            stageFileForRemoval(fileName);
-        }
-
-        //Remove file from CWD if not removed by user already
-        File file = new File(join(CWD, fileName).toString());
-        if (file.exists()) {
-            file.delete();
+    public void find(String message) {
+        List<String> commitFolders = plainFolderNamesIn(COMMIT_DIR);
+        for (String commitFolder : commitFolders) {
+            List<String> commitFile = plainFilenamesIn(join(COMMIT_DIR, commitFolder));
+            Commit commit = loadCommitWithID(commitFolder + commitFile);
+            if (message.equals(commit.getMessage())) {
+                System.out.println(commit.getID());
+            }
         }
     }
 
@@ -432,6 +413,41 @@ public class Repository {
                     System.out.println(file);
                 }
             }
+        }
+    }
+
+    // ------------------------------- RM ------------------------------ //
+
+    /**
+     * Removes the given file from the CWD if it exists
+     * and stops tracking file in further commits
+     *
+     * @param fileName the file that should be removed and untracked in the repo
+     */
+    public void rm(String fileName) {
+
+        boolean fileStaged = getFilesStagedForAddition().containsKey(fileName);
+        boolean fileTracked = loadHead().trackedFiles.containsKey(fileName);
+        //File is neither staged nor tracked in the head commit
+        if (!fileStaged && !fileTracked) {
+            message("No reason to remove the file.");
+            System.exit(0);
+        }
+
+        //Unstage file if it has been staged for addition
+        if (fileStaged) {
+            removeFromStagingArea(fileName);
+        }
+
+        //Stage file for removal if tracked by latest commit
+        if (fileTracked) {
+            stageFileForRemoval(fileName);
+        }
+
+        //Remove file from CWD if not removed by user already
+        File file = new File(join(CWD, fileName).toString());
+        if (file.exists()) {
+            file.delete();
         }
     }
 
