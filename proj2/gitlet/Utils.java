@@ -168,6 +168,14 @@ class Utils {
             }
         };
 
+    private static final FilenameFilter PLAIN_FOLDERS =
+            new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return new File(dir, name).isDirectory();
+                }
+            };
+
     /** Returns a list of the names of all plain files in the directory DIR, in
      *  lexicographic order as Java Strings.  Returns null if DIR does
      *  not denote a directory. */
@@ -186,6 +194,19 @@ class Utils {
      *  not denote a directory. */
     static List<String> plainFilenamesIn(String dir) {
         return plainFilenamesIn(new File(dir));
+    }
+
+    /** Returns a list of the names of all plain folders in the directory DIR, in
+     *  lexicographic order as Java Strings.  Returns null if DIR does
+     *  not denote a directory. */
+    static List<String> plainFolderNamesIn(File dir) {
+        String[] folders = dir.list(PLAIN_FOLDERS);
+        if (folders == null) {
+            return null;
+        } else {
+            Arrays.sort(folders);
+            return Arrays.asList(folders);
+        }
     }
 
     /* OTHER FILE UTILITIES */

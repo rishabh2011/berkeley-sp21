@@ -29,6 +29,7 @@ public class Main {
             case "commit" -> gitlet.commit(args[1]);
             case "checkout" -> gitlet.checkout(args);
             case "log" -> gitlet.log();
+            case "global-log" -> gitlet.globalLog();
             case "rm" -> gitlet.rm(args[1]);
             case "branch" -> gitlet.branch(args[1]);
             case "merge" -> gitlet.merge(args[1]);

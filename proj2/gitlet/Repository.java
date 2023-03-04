@@ -277,7 +277,7 @@ public class Repository {
     // ------------------------------- LOG ------------------------------ //
 
     /**
-     * Display information on all commits made so far
+     * Displays commit history of the currently active branch
      */
     public void log() {
         Commit headCommit = loadHead();
@@ -300,6 +300,21 @@ public class Repository {
             File commitFile = new File(join(COMMIT_DIR, commitID.substring(0, 6),
                     commitID.substring(6)).toString());
             log(readObject(commitFile, Commit.class));
+        }
+    }
+
+    // ------------------------------- GLOBAL LOG ------------------------------ //
+
+    /**
+     * Displays commit history of the entire repository across all branches
+     * in no particular order
+     */
+    public void globalLog() {
+        List<String> commitFolders = plainFolderNamesIn(COMMIT_DIR);
+        for (String commitFolder : commitFolders) {
+            List<String> commitFile = plainFilenamesIn(join(COMMIT_DIR, commitFolder));
+            Commit commit = loadCommitWithID(commitFolder + commitFile);
+            commit.printCommitInfo();
         }
     }
 
