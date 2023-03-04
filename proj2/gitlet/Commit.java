@@ -142,8 +142,8 @@ public class Commit implements Serializable, Dumpable {
         //Merge commit
         if (parentIDs.size() > 1) {
             System.out.print("Merge: ");
-            for (String id : parentIDs) {
-                System.out.print(id.substring(0, 7) + " ");
+            for (String parentID : parentIDs) {
+                System.out.print(parentID.substring(0, 7) + " ");
             }
             System.out.println();
         }

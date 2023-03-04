@@ -32,6 +32,7 @@ public class Main {
             case "rm" -> gitlet.rm(args[1]);
             case "branch" -> gitlet.branch(args[1]);
             case "merge" -> gitlet.merge(args[1]);
+            case "status" -> gitlet.status();
             default -> {
             }
             // TODO: FILL THE REST IN

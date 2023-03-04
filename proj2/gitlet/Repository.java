@@ -1,10 +1,7 @@
 package gitlet;
 
 import java.io.File;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static gitlet.LatestCommonAncestor.findLCA;
 import static gitlet.Utils.*;
@@ -103,7 +100,7 @@ public class Repository {
 
         //Calculate given file ID
         String fileContent = readContentsAsString(file);
-        String fileID = sha1(serialize(fileContent));
+        String fileID = sha1(fileContent);
 
         //HEAD commit file ID
         Commit headCommit = loadHead();
@@ -133,8 +130,8 @@ public class Repository {
         }
 
         //no files staged
-        if (getFilesStagedForAddition().size() == 0 &&
-                getFilesStagedForRemoval().size() == 0) {
+        if (getFilesStagedForAddition().size() == 0
+                && getFilesStagedForRemoval().size() == 0) {
             message("No changes added to the commit");
             System.exit(0);
         }
@@ -349,8 +346,80 @@ public class Repository {
      * Display the current status of the git repository
      */
     public void status() {
+        System.out.println("=== Branches ===");
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        loadCurrentBranchVar();
+        for (String branch : branches) {
+            if (branch.equals(currentBranch)) {
+                System.out.print("*");
+            }
+            System.out.println(branch);
+        }
+        System.out.println();
 
+        System.out.println("=== Staged Files ===");
+        List<String> sortedFiles = new ArrayList<>(getFilesStagedForAddition().keySet());
+        Collections.sort(sortedFiles);
+        for (String file : sortedFiles) {
+            System.out.println(file);
+        }
+        System.out.println();
 
+        System.out.println("=== Removed Files ===");
+        sortedFiles = new ArrayList<>(getFilesStagedForRemoval());
+        Collections.sort(sortedFiles);
+        for (String file : sortedFiles) {
+            System.out.println(file);
+        }
+        System.out.println();
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        SortedSet<String> modifiedFiles = new TreeSet<>();
+        Map<String, String> stagedFiles = getFilesStagedForAddition();
+        Commit headCommit = loadHead();
+        for (String file : headCommit.trackedFiles.keySet()) {
+            File cwdFile = new File(CWD, file);
+            if (cwdFile.exists()) {
+                String fileContent = readContentsAsString(cwdFile);
+                String fileID = sha1(fileContent);
+                //File tracked by current commit, modified in CWD and not staged
+                if (!fileID.equals(headCommit.trackedFiles.get(file))
+                        && !stagedFiles.containsKey(file)) {
+                    modifiedFiles.add(file + " (modified)");
+                }
+                //File tracked by current commit, removed from CWD and not staged for removal
+            } else if (!getFilesStagedForRemoval().contains(file)) {
+                modifiedFiles.add(file + " (deleted)");
+            }
+        }
+        for (String file : stagedFiles.keySet()) {
+            File cwdFile = new File(CWD, file);
+            if (cwdFile.exists()) {
+                String fileContent = readContentsAsString(cwdFile);
+                String fileID = sha1(fileContent);
+                //File staged and then modified differently in CWD
+                if (!fileID.equals(stagedFiles.get(file))) {
+                    modifiedFiles.add(file + " (modified)");
+                }
+                //File staged and then removed from CWD
+            } else {
+                modifiedFiles.add(file + " (deleted)");
+            }
+        }
+        for (String file : modifiedFiles) {
+            System.out.println(file);
+        }
+        System.out.println();
+        
+        System.out.println("=== Untracked Files ===");
+        List<String> cwdFiles = plainFilenamesIn(CWD);
+        if (cwdFiles != null) {
+            for (String file : cwdFiles) {
+                if (!headCommit.trackedFiles.containsKey(file) && !stagedFiles.containsKey(file)) {
+                    System.out.println(file);
+                }
+            }
+        }
     }
 
     // ------------------------------- BRANCH ------------------------------ //
@@ -383,8 +452,8 @@ public class Repository {
     public void merge(String mergeBranch) {
 
         //Failure 1: Uncommited changes
-        if (getFilesStagedForAddition().size() != 0 ||
-                getFilesStagedForRemoval().size() != 0) {
+        if (getFilesStagedForAddition().size() != 0
+                || getFilesStagedForRemoval().size() != 0) {
             message("You have uncommited changes.");
             System.exit(0);
         }
@@ -403,6 +472,7 @@ public class Repository {
             System.exit(0);
         }
 
+        //Find the latest common ancestor (split point)
         Commit currentHead = loadHead();
         Commit mergeHead = loadBranchHead(mergeBranch);
         Commit split = findLCA(currentHead, mergeHead);
@@ -416,7 +486,7 @@ public class Repository {
             System.exit(0);
         }
 
-        //Split point is the same as current branch
+        // Split point is the same as current branch
         if (split.getID().equals(currentHead.getID())) {
             checkoutBranch(mergeBranch);
             message("Current branch fast-forwarded.");
@@ -466,6 +536,8 @@ public class Repository {
                     checkoutFileInCommit(mergeHead, file);
                     stageFileForAddition(file, mergeID);
                     break;
+                default:
+                    break;
             }
             mergeHead.trackedFiles.remove(file);
         }
@@ -497,6 +569,8 @@ public class Repository {
                     checkoutFileInCommit(mergeHead, file);
                     stageFileForAddition(file, mergeID);
                     break;
+                default:
+                    break;
             }
         }
         return conflictCount;
@@ -505,23 +579,24 @@ public class Repository {
 
     /**
      * Compares file states of all three commits involved in the merging process
-     * and returns an int value accordingly
+     * and returns an int value accordingly.
      *
-     * <br>Condition 1: File absent in merge branch and
-     * unmodified in current branch : {@code returns 1}</br>
+     * <p>
+     * <strong>Condition 1:</strong>
+     * <br>-File absent in merge branch and unmodified in current branch</br>
      *
-     * <br>Condition 2: File absent in current branch and
-     * modified in merge branch or
-     * File absent in merge branch and modified in current branch or
-     * File present in split point and modified differently in both branches or
-     * File absent in split point and
-     * modified differently in both branches : {@code returns 2}</br>
+     * <br><strong>Condition 2: Conflicts</strong></br>
+     * <br>-File absent in current branch and modified in merge branch</br>
+     * <br>-File absent in merge branch and modified in current branch</br>
+     * <br>-File present in split point and modified differently in both branches</br>
+     * <br>-File absent in split point and modified differently in both branches</br>
      *
-     * <br>Condition 3: File modified in merge branch and
-     * unmodified in current branch : {@code returns 3}</br>
+     * <br><strong>Condition 3:</strong></br>
+     * <br>-File modified in merge branch and unmodified in current branch</br>
      *
-     * <br>Condition 4: File absent in split point and
-     * present only in merge branch : {@code returns 4}</br>
+     * <br><strong>Condition 4:</strong></br>
+     * <br>-File absent in split point and present only in merge branch</br>
+     * </p>
      *
      * @param splitID the split commit version of a file
      * @param currID  the current head commit version of a file
@@ -615,17 +690,17 @@ public class Repository {
      * Checks for untracked files that can potentially be overwritten or removed by
      * a checkout branch or merge operation
      *
-     * @param currentHead the current branch head commit
-     * @param mergeHead   the merge branch head commit
+     * @param branch1Head  branch1 head commit
+     * @param branch2Head  branch2 head commit
      */
-    private void checkUntrackedFiles(Commit currentHead, Commit mergeHead) {
+    private void checkUntrackedFiles(Commit branch1Head, Commit branch2Head) {
         List<String> cwdFiles = plainFilenamesIn(CWD);
         if (cwdFiles != null) {
             for (String file : cwdFiles) {
-                if (!currentHead.trackedFiles.containsKey(file) &&
-                        mergeHead.trackedFiles.containsKey(file)) {
-                    message("There is an untracked file in the way; delete it, " +
-                            "or add and commit it first.");
+                if (!branch1Head.trackedFiles.containsKey(file)
+                        && branch2Head.trackedFiles.containsKey(file)) {
+                    message("There is an untracked file in the way; delete it, "
+                            + "or add and commit it first.");
                     System.exit(0);
                 }
             }
