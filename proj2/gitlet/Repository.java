@@ -165,13 +165,13 @@ public class Repository {
 
     /**
      * Checkout:
-     * <br>1. file in head commit</br>
-     * <br>2. file in given commit</br>
-     * <br>3. Branch</br>
+     * <br>1. Branch</br>
+     * <br>2. file in head commit</br>
+     * <br>3. file in given commit</br>
      *
-     * @param args <br>1. (file) </br>
-     *             <br>2. (commit, file)</br>
-     *             <br>3. (branch)</br>
+     * @param args <br>1. (branch)</br>
+     *             <br>2. (file) </br>
+     *             <br>3. (commit, file)</br>
      */
     public void checkout(String... args) {
 
@@ -453,6 +453,33 @@ public class Repository {
         currentBranch = branch;
         saveCurrentBranchVar();
         saveBranch();
+    }
+
+    // ------------------------------- RM BRANCH ------------------------------ //
+
+    /**
+     * Removes branch with the given name from the repository
+     * <p> This only deletes the pointer associated with the branch;
+     * Does not delete any commits created under the branch</p>
+     *
+     * @param branch the name of the branch to be removed
+     */
+    public void removeBranch(String branch) {
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        if (!branches.contains(branch)) {
+            message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+
+        loadCurrentBranchVar();
+        if (branch.equals(currentBranch)) {
+            message("Cannot remove the current branch.");
+            System.exit(0);
+        }
+
+        //Delete branch from branch dir
+        File file = new File(join(BRANCH_DIR, branch).toString());
+        file.delete();
     }
 
     // ------------------------------- MERGE ------------------------------ //
