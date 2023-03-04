@@ -281,27 +281,25 @@ public class Repository {
      */
     public void log() {
         Commit headCommit = loadHead();
-        headCommit.printCommitInfo();
-        log(headCommit.getParentIDs());
+        log(headCommit);
     }
 
     /**
      * Recursively iterate through all commits and print relevant info
      */
-    private void log(LinkedList<String> commitIDs) {
-        if (commitIDs == null) {
+    private void log(Commit commit) {
+        if (commit == null) {
             return;
         }
 
-        for (String commitID : commitIDs) {
-            //Load commit file from disk
+        //Display commit info
+        commit.printCommitInfo();
+        if (!commit.getParentIDs().isEmpty()) {
+            String commitID = commit.getParentIDs().get(0);
+            //Load first parent commit file from disk
             File commitFile = new File(join(COMMIT_DIR, commitID.substring(0, 6),
                     commitID.substring(6)).toString());
-            Commit commit = readObject(commitFile, Commit.class);
-
-            //Display commit info
-            commit.printCommitInfo();
-            log(commit.getParentIDs());
+            log(readObject(commitFile, Commit.class));
         }
     }
 
@@ -410,7 +408,7 @@ public class Repository {
             System.out.println(file);
         }
         System.out.println();
-        
+
         System.out.println("=== Untracked Files ===");
         List<String> cwdFiles = plainFilenamesIn(CWD);
         if (cwdFiles != null) {
@@ -690,8 +688,8 @@ public class Repository {
      * Checks for untracked files that can potentially be overwritten or removed by
      * a checkout branch or merge operation
      *
-     * @param branch1Head  branch1 head commit
-     * @param branch2Head  branch2 head commit
+     * @param branch1Head branch1 head commit
+     * @param branch2Head branch2 head commit
      */
     private void checkUntrackedFiles(Commit branch1Head, Commit branch2Head) {
         List<String> cwdFiles = plainFilenamesIn(CWD);
