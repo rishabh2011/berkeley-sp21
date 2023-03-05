@@ -14,9 +14,10 @@ public class Main {
      * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
     public static void main(String[] args) {
-        //Empty arguement list or empty arguement provided
-        if (args.length == 0 || args[0].equals("")) {
+        //Empty arguement list
+        if (args.length == 0) {
             Utils.message("Please enter a command.");
+            System.exit(0);
         }
 
         String firstArg = args[0];
@@ -24,11 +25,6 @@ public class Main {
         //Check repo has been created first
         if (!firstArg.equals("init")) {
             gitlet.checkRepoExists();
-        }
-
-        if (args.length == 2 && args[1].equals("")) {
-            message("Incorrect operands.");
-            System.exit(0);
         }
 
         switch (firstArg) {
@@ -101,7 +97,7 @@ public class Main {
     }
 
     public static void commandsWithOneArgument(String[] args) {
-        if (args.length > 2 || args[1].equals("")) {
+        if (args.length > 2) {
             message("Incorrect operands.");
             System.exit(0);
         }
@@ -115,7 +111,7 @@ public class Main {
 
         // checkout [commit id] -- [file name]
         if (args.length == 4) {
-            if (args[1].equals("") || !args[2].equals("--") || args[3].equals("")) {
+            if (!args[2].equals("--")) {
                 message("Incorrect operands.");
                 System.exit(0);
             }
@@ -123,15 +119,7 @@ public class Main {
 
         // checkout -- [file name]
         if (args.length == 3) {
-            if (!args[1].equals("--") || args[2].equals("")) {
-                message("Incorrect operands.");
-                System.exit(0);
-            }
-        }
-
-        // checkout [branch name]
-        if (args.length == 2) {
-            if (args[1].equals("")) {
+            if (!args[1].equals("--")) {
                 message("Incorrect operands.");
                 System.exit(0);
             }

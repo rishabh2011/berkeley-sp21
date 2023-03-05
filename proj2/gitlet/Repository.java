@@ -461,7 +461,7 @@ public class Repository {
         LinkedList<Commit> parents = new LinkedList<>();
         parents.addLast(currentHead);
         parents.addLast(mergeHead);
-        commit("Merged " + mergeBranch + " into " + currentBranch, parents);
+        commit("Merged " + mergeBranch + " into " + currentBranch + ".", parents);
     }
 
     /**
@@ -581,7 +581,7 @@ public class Repository {
                 return 2;
             }
 
-            //File modified in given branch
+            //File modified in merge branch
             if (mergeID != null && !splitID.equals(mergeID)) {
                 //1. Unmodified in current branch
                 if (splitID.equals(currID)) {
@@ -591,16 +591,16 @@ public class Repository {
                 //8. Modified differently in both branches
                 return 2;
             }
-        }
+        } else {
+            //5. File present only in given branch
+            if (currID == null) {
+                return 4;
+            }
 
-        //5. File present only in given branch
-        if (currID == null) {
-            return 4;
-        }
-
-        //8. File present in both branches and modified differently
-        if (!mergeID.equals(currID)) {
-            return 2;
+            //8. File present in both branches and modified differently
+            if (!mergeID.equals(currID)) {
+                return 2;
+            }
         }
 
         return 0;
@@ -635,6 +635,7 @@ public class Repository {
         StringBuilder sb = new StringBuilder();
         sb.append("<<<<<<< HEAD\n");
         sb.append(currentFileContents);
+        sb.append("\n");
         sb.append("=======\n");
         sb.append(mergeFileContents);
         sb.append(">>>>>>>");
@@ -766,6 +767,7 @@ public class Repository {
                 }
             }
         }
+        System.out.println();
     }
 
     /**
