@@ -13,7 +13,7 @@ public class Main {
      */
     public static void main(String[] args) {
         if (args.length == 0) {
-            Utils.message("Please enter atleast one arguement.");
+            Utils.message("Please enter a command.");
         }
 
         String firstArg = args[0];
@@ -28,15 +28,17 @@ public class Main {
             case "add" -> gitlet.add(args[1]);
             case "commit" -> gitlet.commit(args[1]);
             case "checkout" -> gitlet.checkout(args);
-            case "log" -> gitlet.log();
-            case "global-log" -> gitlet.globalLog();
             case "find" -> gitlet.find(args[1]);
-            case "status" -> gitlet.status();
             case "rm" -> gitlet.rm(args[1]);
+            case "reset" -> gitlet.reset(args[1]);
             case "branch" -> gitlet.branch(args[1]);
             case "rm-branch" -> gitlet.removeBranch(args[1]);
             case "merge" -> gitlet.merge(args[1]);
+            case "log" -> gitlet.log();
+            case "global-log" -> gitlet.globalLog();
+            case "status" -> gitlet.status();
             default -> {
+                System.out.println("No command with that name exists.");
             }
         }
     }

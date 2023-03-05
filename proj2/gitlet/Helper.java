@@ -38,19 +38,7 @@ public class Helper {
         branchDir.mkdir();
     }
 
-    // ------------ Saving and Loading Head Ref --------------- //
-
-    /**
-     * Updates and saves the head ref
-     * to point to the latest commit
-     *
-     * @param commitID the id of the latest commit to which head should point
-     */
-    static void saveHead(String commitID) {
-        head = commitID;
-        File headFile = new File(join(REF_DIR, "HEAD").toString());
-        writeContents(headFile, head);
-    }
+    // ------------ Loading head commit --------------- //
 
     /**
      * Loads the current HEAD commit in the repo i.e. the head commit of the
@@ -58,12 +46,9 @@ public class Helper {
      *
      * @return head commit
      */
-    static Commit loadHead() {
-        File headFile = new File(join(REF_DIR, "HEAD").toString());
-        head = readContentsAsString(headFile);
-
-        File commitPath = join(COMMIT_DIR, head.substring(0, 6), head.substring(6));
-        return readObject(commitPath, Commit.class);
+    static Commit loadCurrentHead() {
+        loadCurrentBranchVar();
+        return loadBranchHead(currentBranch);
     }
 
     // ------------ Saving and Loading Branches --------------- //
@@ -85,16 +70,15 @@ public class Helper {
     }
 
     /**
-     * Updates and saves the currently tracked branch ref
-     * to point to the head commit
+     * Updates and saves the given branch ref
+     * to point to the given commit
+     *
+     * @param branch the branch to save
+     * @param commitID the commit id to save as given branch head
      */
-    static void saveBranch() {
-        File headFile = new File(join(REF_DIR, "HEAD").toString());
-        head = readContentsAsString(headFile);
-
-        loadCurrentBranchVar();
-        File branchFile = new File(join(BRANCH_DIR, currentBranch).toString());
-        writeContents(branchFile, head);
+    static void saveBranch(String branch, String commitID) {
+        File branchFile = new File(join(BRANCH_DIR, branch).toString());
+        writeContents(branchFile, commitID);
     }
 
     /**
@@ -131,8 +115,8 @@ public class Helper {
         File commitFile = new File(join(commitDir, commitFileName).toString());
         writeObject(commitFile, newCommit);
 
-        saveHead(commitID);
-        saveBranch();
+        loadCurrentBranchVar();
+        saveBranch(currentBranch, commitID);
     }
 
     /**

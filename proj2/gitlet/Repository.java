@@ -10,8 +10,7 @@ import static gitlet.StagingOperations.*;
 
 /**
  * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
+ * Provides functionality for all gitlet commands.
  *
  * @author Rishabh Choudhury
  */
@@ -46,10 +45,6 @@ public class Repository {
      * The Branch Directory
      */
     static final File BRANCH_DIR = join(REF_DIR, "branches");
-    /**
-     * Points to the latest commit in the current branch
-     */
-    static String head;
     /**
      * Tracks the current branch
      */
@@ -103,7 +98,7 @@ public class Repository {
         String fileID = sha1(fileContent);
 
         //HEAD commit file ID
-        Commit headCommit = loadHead();
+        Commit headCommit = loadCurrentHead();
         String commitFileID = headCommit.getFileID(fileName);
 
         //File has been modified / is new
@@ -137,7 +132,7 @@ public class Repository {
         }
 
         LinkedList<Commit> parents = new LinkedList<>();
-        parents.addLast(loadHead());
+        parents.addLast(loadCurrentHead());
         commit(message, parents);
     }
 
@@ -180,7 +175,7 @@ public class Repository {
                 checkoutBranch(args[1]);
                 break;
             case 2:
-                Commit headCommit = loadHead();
+                Commit headCommit = loadCurrentHead();
                 checkoutFileInCommit(headCommit, args[2]);
                 break;
             case 3:
@@ -238,7 +233,7 @@ public class Repository {
             System.exit(0);
         }
 
-        Commit currentHead = loadHead();
+        Commit currentHead = loadCurrentHead();
         File branchFile = new File(BRANCH_DIR, branch);
         String branchCommitID = readContentsAsString(branchFile);
         Commit branchHead = loadCommitWithID(branchCommitID);
@@ -246,75 +241,38 @@ public class Repository {
         //Check any working untracked files exist
         checkUntrackedFiles(currentHead, branchHead);
 
-        //Replace files in the CWD with versions tracked
-        // by the checked out branch
-        for (String fileName : branchHead.trackedFiles.keySet()) {
-            checkoutFileInCommit(branchHead, fileName);
-        }
-
-        //Delete files from the CWD tracked by the current branch
-        //but not tracked by the checked out branch
-        for (String fileName : currentHead.trackedFiles.keySet()) {
-            if (!branchHead.trackedFiles.containsKey(fileName)) {
-                File file = new File(CWD, fileName);
-                if (file.exists()) {
-                    file.delete();
-                }
-            }
-        }
+        checkoutCommit(currentHead, branchHead);
 
         //Make checked out branch, the current branch
         currentBranch = branch;
         saveCurrentBranchVar();
 
-        //Update head ref to point to this branch
-        saveHead(branchCommitID);
-
         //Clear staging area
         clearStagingArea();
     }
 
-    // ------------------------------- LOG ------------------------------ //
-
     /**
-     * Displays commit history of the currently active branch
+     * Check out all files in the given commit
+     *
+     * @param currentHead the current head commit
+     * @param givenCommit the commit to check out
      */
-    public void log() {
-        Commit headCommit = loadHead();
-        log(headCommit);
-    }
-
-    /**
-     * Recursively iterate through all commits and print relevant info
-     */
-    private void log(Commit commit) {
-        if (commit == null) {
-            return;
+    private void checkoutCommit(Commit currentHead, Commit givenCommit) {
+        //Replace files in the CWD with versions tracked
+        // by the checked out branch
+        for (String fileName : givenCommit.trackedFiles.keySet()) {
+            checkoutFileInCommit(givenCommit, fileName);
         }
 
-        //Display commit info
-        commit.printCommitInfo();
-        if (!commit.getParentIDs().isEmpty()) {
-            String commitID = commit.getParentIDs().get(0);
-            //Load first parent commit file from disk
-            File commitFile = new File(join(COMMIT_DIR, commitID.substring(0, 6),
-                    commitID.substring(6)).toString());
-            log(readObject(commitFile, Commit.class));
-        }
-    }
-
-    // ------------------------------- GLOBAL LOG ------------------------------ //
-
-    /**
-     * Displays commit history of the entire repository across all branches
-     * in no particular order
-     */
-    public void globalLog() {
-        List<String> commitFolders = plainFolderNamesIn(COMMIT_DIR);
-        for (String commitFolder : commitFolders) {
-            List<String> commitFile = plainFilenamesIn(join(COMMIT_DIR, commitFolder));
-            Commit commit = loadCommitWithID(commitFolder + commitFile);
-            commit.printCommitInfo();
+        //Delete files from the CWD tracked by the current branch
+        //but not tracked by the checked out branch
+        for (String fileName : currentHead.trackedFiles.keySet()) {
+            if (!givenCommit.trackedFiles.containsKey(fileName)) {
+                File file = new File(CWD, fileName);
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
         }
     }
 
@@ -334,88 +292,6 @@ public class Repository {
         }
     }
 
-    // ------------------------------- STATUS ------------------------------ //
-
-    /**
-     * Display the current status of the git repository
-     */
-    public void status() {
-        System.out.println("=== Branches ===");
-        List<String> branches = plainFilenamesIn(BRANCH_DIR);
-        loadCurrentBranchVar();
-        for (String branch : branches) {
-            if (branch.equals(currentBranch)) {
-                System.out.print("*");
-            }
-            System.out.println(branch);
-        }
-        System.out.println();
-
-        System.out.println("=== Staged Files ===");
-        List<String> sortedFiles = new ArrayList<>(getFilesStagedForAddition().keySet());
-        Collections.sort(sortedFiles);
-        for (String file : sortedFiles) {
-            System.out.println(file);
-        }
-        System.out.println();
-
-        System.out.println("=== Removed Files ===");
-        sortedFiles = new ArrayList<>(getFilesStagedForRemoval());
-        Collections.sort(sortedFiles);
-        for (String file : sortedFiles) {
-            System.out.println(file);
-        }
-        System.out.println();
-
-        System.out.println("=== Modifications Not Staged For Commit ===");
-        SortedSet<String> modifiedFiles = new TreeSet<>();
-        Map<String, String> stagedFiles = getFilesStagedForAddition();
-        Commit headCommit = loadHead();
-        for (String file : headCommit.trackedFiles.keySet()) {
-            File cwdFile = new File(CWD, file);
-            if (cwdFile.exists()) {
-                String fileContent = readContentsAsString(cwdFile);
-                String fileID = sha1(fileContent);
-                //File tracked by current commit, modified in CWD and not staged
-                if (!fileID.equals(headCommit.trackedFiles.get(file))
-                        && !stagedFiles.containsKey(file)) {
-                    modifiedFiles.add(file + " (modified)");
-                }
-                //File tracked by current commit, removed from CWD and not staged for removal
-            } else if (!getFilesStagedForRemoval().contains(file)) {
-                modifiedFiles.add(file + " (deleted)");
-            }
-        }
-        for (String file : stagedFiles.keySet()) {
-            File cwdFile = new File(CWD, file);
-            if (cwdFile.exists()) {
-                String fileContent = readContentsAsString(cwdFile);
-                String fileID = sha1(fileContent);
-                //File staged and then modified differently in CWD
-                if (!fileID.equals(stagedFiles.get(file))) {
-                    modifiedFiles.add(file + " (modified)");
-                }
-                //File staged and then removed from CWD
-            } else {
-                modifiedFiles.add(file + " (deleted)");
-            }
-        }
-        for (String file : modifiedFiles) {
-            System.out.println(file);
-        }
-        System.out.println();
-
-        System.out.println("=== Untracked Files ===");
-        List<String> cwdFiles = plainFilenamesIn(CWD);
-        if (cwdFiles != null) {
-            for (String file : cwdFiles) {
-                if (!headCommit.trackedFiles.containsKey(file) && !stagedFiles.containsKey(file)) {
-                    System.out.println(file);
-                }
-            }
-        }
-    }
-
     // ------------------------------- RM ------------------------------ //
 
     /**
@@ -427,7 +303,7 @@ public class Repository {
     public void rm(String fileName) {
 
         boolean fileStaged = getFilesStagedForAddition().containsKey(fileName);
-        boolean fileTracked = loadHead().trackedFiles.containsKey(fileName);
+        boolean fileTracked = loadCurrentHead().trackedFiles.containsKey(fileName);
         //File is neither staged nor tracked in the head commit
         if (!fileStaged && !fileTracked) {
             message("No reason to remove the file.");
@@ -451,6 +327,25 @@ public class Repository {
         }
     }
 
+    // ------------------------------- RESET ------------------------------ //
+
+    /**
+     * Checks out all the files tracked by the given commit.
+     * Removes tracked files that are not present in that commit.
+     * Also moves the current branch’s head to that commit node.
+     *
+     * @param commitID the id of the commit to reset to
+     */
+    public void reset(String commitID) {
+        Commit currentHead = loadCurrentHead();
+        Commit givenCommit = loadCommitWithID(commitID);
+        checkUntrackedFiles(currentHead, givenCommit);
+        checkoutCommit(currentHead, givenCommit);
+
+        loadCurrentHead();
+        saveBranch(currentBranch, commitID);
+    }
+
     // ------------------------------- BRANCH ------------------------------ //
 
     /**
@@ -466,9 +361,11 @@ public class Repository {
             System.exit(0);
         }
 
+        Commit headCommit = loadCurrentHead();
+        saveBranch(branch, headCommit.getID());
+
         currentBranch = branch;
         saveCurrentBranchVar();
-        saveBranch();
     }
 
     // ------------------------------- RM BRANCH ------------------------------ //
@@ -529,7 +426,7 @@ public class Repository {
         }
 
         //Find the latest common ancestor (split point)
-        Commit currentHead = loadHead();
+        Commit currentHead = loadCurrentHead();
         Commit mergeHead = loadBranchHead(mergeBranch);
         Commit split = findLCA(currentHead, mergeHead);
 
@@ -742,19 +639,146 @@ public class Repository {
         add(fileName);
     }
 
+    // ------------------------------- LOG ------------------------------ //
+
     /**
-     * Checks for untracked files that can potentially be overwritten or removed by
-     * a checkout branch or merge operation
-     *
-     * @param branch1Head branch1 head commit
-     * @param branch2Head branch2 head commit
+     * Displays commit history of the currently active branch
      */
-    private void checkUntrackedFiles(Commit branch1Head, Commit branch2Head) {
+    public void log() {
+        Commit headCommit = loadCurrentHead();
+        log(headCommit);
+    }
+
+    /**
+     * Recursively iterate through all commits and print relevant info
+     */
+    private void log(Commit commit) {
+        if (commit == null) {
+            return;
+        }
+
+        //Display commit info
+        commit.printCommitInfo();
+        if (!commit.getParentIDs().isEmpty()) {
+            String commitID = commit.getParentIDs().get(0);
+            //Load first parent commit file from disk
+            File commitFile = new File(join(COMMIT_DIR, commitID.substring(0, 6),
+                    commitID.substring(6)).toString());
+            log(readObject(commitFile, Commit.class));
+        }
+    }
+
+    // ------------------------------- GLOBAL LOG ------------------------------ //
+
+    /**
+     * Displays commit history of the entire repository across all branches
+     * in no particular order
+     */
+    public void globalLog() {
+        List<String> commitFolders = plainFolderNamesIn(COMMIT_DIR);
+        for (String commitFolder : commitFolders) {
+            List<String> commitFile = plainFilenamesIn(join(COMMIT_DIR, commitFolder));
+            Commit commit = loadCommitWithID(commitFolder + commitFile);
+            commit.printCommitInfo();
+        }
+    }
+
+    // ------------------------------- STATUS ------------------------------ //
+
+    /**
+     * Display the current status of the git repository
+     */
+    public void status() {
+        System.out.println("=== Branches ===");
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        loadCurrentBranchVar();
+        for (String branch : branches) {
+            if (branch.equals(currentBranch)) {
+                System.out.print("*");
+            }
+            System.out.println(branch);
+        }
+        System.out.println();
+
+        System.out.println("=== Staged Files ===");
+        List<String> sortedFiles = new ArrayList<>(getFilesStagedForAddition().keySet());
+        Collections.sort(sortedFiles);
+        for (String file : sortedFiles) {
+            System.out.println(file);
+        }
+        System.out.println();
+
+        System.out.println("=== Removed Files ===");
+        sortedFiles = new ArrayList<>(getFilesStagedForRemoval());
+        Collections.sort(sortedFiles);
+        for (String file : sortedFiles) {
+            System.out.println(file);
+        }
+        System.out.println();
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        SortedSet<String> modifiedFiles = new TreeSet<>();
+        Map<String, String> stagedFiles = getFilesStagedForAddition();
+        Commit headCommit = loadCurrentHead();
+        for (String file : headCommit.trackedFiles.keySet()) {
+            File cwdFile = new File(CWD, file);
+            if (cwdFile.exists()) {
+                String fileContent = readContentsAsString(cwdFile);
+                String fileID = sha1(fileContent);
+                //File tracked by current commit, modified in CWD and not staged
+                if (!fileID.equals(headCommit.trackedFiles.get(file))
+                        && !stagedFiles.containsKey(file)) {
+                    modifiedFiles.add(file + " (modified)");
+                }
+                //File tracked by current commit, removed from CWD and not staged for removal
+            } else if (!getFilesStagedForRemoval().contains(file)) {
+                modifiedFiles.add(file + " (deleted)");
+            }
+        }
+        for (String file : stagedFiles.keySet()) {
+            File cwdFile = new File(CWD, file);
+            if (cwdFile.exists()) {
+                String fileContent = readContentsAsString(cwdFile);
+                String fileID = sha1(fileContent);
+                //File staged and then modified differently in CWD
+                if (!fileID.equals(stagedFiles.get(file))) {
+                    modifiedFiles.add(file + " (modified)");
+                }
+                //File staged and then removed from CWD
+            } else {
+                modifiedFiles.add(file + " (deleted)");
+            }
+        }
+        for (String file : modifiedFiles) {
+            System.out.println(file);
+        }
+        System.out.println();
+
+        System.out.println("=== Untracked Files ===");
         List<String> cwdFiles = plainFilenamesIn(CWD);
         if (cwdFiles != null) {
             for (String file : cwdFiles) {
-                if (!branch1Head.trackedFiles.containsKey(file)
-                        && branch2Head.trackedFiles.containsKey(file)) {
+                if (!headCommit.trackedFiles.containsKey(file) && !stagedFiles.containsKey(file)) {
+                    System.out.println(file);
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks for any untracked files in current head commit
+     * that can potentially be overwritten or removed by
+     * a checkout branch or reset or merge operation
+     *
+     * @param currentHead head commit of the current branch
+     * @param givenHead   the commit to check with
+     */
+    private void checkUntrackedFiles(Commit currentHead, Commit givenHead) {
+        List<String> cwdFiles = plainFilenamesIn(CWD);
+        if (cwdFiles != null) {
+            for (String file : cwdFiles) {
+                if (!currentHead.trackedFiles.containsKey(file)
+                        && givenHead.trackedFiles.containsKey(file)) {
                     message("There is an untracked file in the way; delete it, "
                             + "or add and commit it first.");
                     System.exit(0);
@@ -771,8 +795,7 @@ public class Repository {
         File gitletDir = new File(GITLET_DIR.toString());
         //Check repo exists
         if (!gitletDir.exists()) {
-            message("No gitlet repository exists. Please create a repository first using"
-                    + " the \"java gitlet.Main init\" command");
+            message("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
     }
