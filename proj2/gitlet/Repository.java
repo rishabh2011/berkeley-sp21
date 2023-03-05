@@ -632,14 +632,9 @@ public class Repository {
         }
 
         File file = join(CWD, fileName);
-        StringBuilder sb = new StringBuilder();
-        sb.append("<<<<<<< HEAD\n");
-        sb.append(currentFileContents);
-        sb.append("\n");
-        sb.append("=======\n");
-        sb.append(mergeFileContents);
-        sb.append(">>>>>>>");
-        writeContents(file, sb.toString());
+        String output = "<<<<<<< HEAD\n" + currentFileContents + "=======\n"
+                + mergeFileContents + ">>>>>>>";
+        writeContents(file, output);
         add(fileName);
     }
 
