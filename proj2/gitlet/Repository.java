@@ -635,6 +635,7 @@ public class Repository {
         StringBuilder sb = new StringBuilder();
         sb.append("<<<<<<< HEAD\n");
         sb.append(currentFileContents);
+        sb.append("\n");
         sb.append("=======\n");
         sb.append(mergeFileContents);
         sb.append(">>>>>>>");
