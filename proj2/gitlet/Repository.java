@@ -118,8 +118,8 @@ public class Repository {
      */
     public void commit(String message) {
 
-        //if message is null abort
-        if (message == null) {
+        //if message is empty abort
+        if (message.equals("")) {
             message("Please enter a commit message.");
             System.exit(0);
         }
@@ -282,13 +282,20 @@ public class Repository {
      * Finds all commits in repository containing the given message
      */
     public void find(String message) {
+        boolean foundCommit = false;
         List<String> commitFolders = plainFolderNamesIn(COMMIT_DIR);
         for (String commitFolder : commitFolders) {
             List<String> commitFile = plainFilenamesIn(join(COMMIT_DIR, commitFolder));
             Commit commit = loadCommitWithID(commitFolder + commitFile);
             if (message.equals(commit.getMessage())) {
+                foundCommit = true;
                 System.out.println(commit.getID());
             }
+        }
+
+        if (!foundCommit) {
+            message("Found no commit with that message.");
+            System.exit(0);
         }
     }
 
@@ -318,12 +325,11 @@ public class Repository {
         //Stage file for removal if tracked by latest commit
         if (fileTracked) {
             stageFileForRemoval(fileName);
-        }
-
-        //Remove file from CWD if not removed by user already
-        File file = new File(join(CWD, fileName).toString());
-        if (file.exists()) {
-            file.delete();
+            //Remove file from CWD if not removed by user already
+            File file = new File(join(CWD, fileName).toString());
+            if (file.exists()) {
+                file.delete();
+            }
         }
     }
 
@@ -363,9 +369,6 @@ public class Repository {
 
         Commit headCommit = loadCurrentHead();
         saveBranch(branch, headCommit.getID());
-
-        currentBranch = branch;
-        saveCurrentBranchVar();
     }
 
     // ------------------------------- RM BRANCH ------------------------------ //

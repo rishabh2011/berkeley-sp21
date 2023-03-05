@@ -91,6 +91,7 @@ public class StagingOperations implements Serializable, Dumpable {
     static void removeFromStagingArea(String fileName) {
         StagingOperations stageOps = loadStagedFile();
         stageOps.addFiles.remove(fileName);
+        stageOps.removeFiles.remove(fileName);
         saveStagedFile(stageOps);
         File file = new File(STAGED_COPY_DIR, fileName);
         file.delete();
