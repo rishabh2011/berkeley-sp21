@@ -633,7 +633,7 @@ public class Repository {
 
         File file = join(CWD, fileName);
         String output = "<<<<<<< HEAD\n" + currentFileContents + "=======\n"
-                + mergeFileContents + ">>>>>>>";
+                + mergeFileContents + ">>>>>>>\n";
         writeContents(file, output);
         add(fileName);
     }

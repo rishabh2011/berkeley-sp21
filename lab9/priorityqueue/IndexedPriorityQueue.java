@@ -92,6 +92,7 @@ public class MyPriorityQueue<Item> implements MinPQ<Item> {
         while (child > 1 && isGreater(parent, child)) {
             swap(child, parent);
             child /= 2;
+            parent = child / 2;
         }
     }
 
