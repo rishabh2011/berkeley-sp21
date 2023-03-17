@@ -103,15 +103,15 @@ public class MyPriorityQueue<Item> implements MinPQ<Item> {
      */
     private void sink(int parent) {
 
-        int leftChild = 2 * parent;
-        int rightChild = 2 * parent + 1;
+        int child = 2 * parent;
+        //left child greater than right child
+        if (child < size && isGreater(child, child + 1)) {
+            child++;
+        }
 
-        if (leftChild <= size && isGreater(parent, leftChild)) {
-            swap(parent, leftChild);
-            sink(leftChild);
-        } else if (rightChild <= size && isGreater(parent, rightChild)) {
-            swap(parent, rightChild);
-            sink(rightChild);
+        if (child <= size && isGreater(parent, child)) {
+            swap(parent, child);
+            sink(child);
         }
     }
 
