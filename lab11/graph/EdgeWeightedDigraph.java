@@ -9,7 +9,7 @@ import java.util.LinkedList;
  *
  * @author Rishabh Choudhury
  */
-public class WeightedDigraph implements Graph {
+public class EdgeWeightedDigraph implements Graph {
 
     /**
      * Adjacency lists
@@ -34,7 +34,7 @@ public class WeightedDigraph implements Graph {
      *
      * @param V number of vertices of the graph
      */
-    public WeightedDigraph(int V) {
+    public EdgeWeightedDigraph(int V) {
         this.V = V;
         adj = (LinkedList<Edge>[]) new LinkedList[V]; //Create vertices array
         for (int i = 0; i < V; ++i) {
@@ -52,7 +52,7 @@ public class WeightedDigraph implements Graph {
      *           <br>3. Each consecutive input after are vertices v and w.
      *           An edge is automatically created to connect the two vertices </br>
      */
-    public WeightedDigraph(In in) {
+    public EdgeWeightedDigraph(In in) {
         this(in.readInt()); //Create a graph with given number of vertices
         System.out.println("Enter number of edges");
         E = in.readInt();
@@ -71,7 +71,7 @@ public class WeightedDigraph implements Graph {
                 continue;
             }
             System.out.print("Enter edge weight: ");
-            int weight = in.readInt(); //read vertex w
+            double weight = in.readDouble(); //read vertex w
             addEdge(v, w, weight); //connect vertices v and w with an edge
             ++i;
             System.out.println();
@@ -89,7 +89,7 @@ public class WeightedDigraph implements Graph {
     }
 
     @Override
-    public void addEdge(int v, int w, int weight) {
+    public void addEdge(int v, int w, double weight) {
         //Create edge v to w
         Edge newEdge = new Edge(w, weight);
         //connect v to w

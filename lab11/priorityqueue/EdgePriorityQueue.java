@@ -1,5 +1,7 @@
 package priorityqueue;
 
+import graph.Edge;
+
 import java.util.Comparator;
 import java.util.HashMap;
 
@@ -9,37 +11,37 @@ import java.util.HashMap;
  * @author Rishabh Choudhury
  */
 
-public class VertexPriorityQueue implements MinPQ {
+public class EdgePriorityQueue implements MinPQ {
 
     /**
      * heap array acts as underlying data structure
      */
-    private Vertex[] heap;
+    private Edge[] heap;
 
     /**
      * each key entry in hash map points to its respective position in the heap
      */
-    private HashMap<Vertex, Integer> vertexHeapIndex;
+    private HashMap<Edge, Integer> edgeHeapIndex;
 
     /**
      * Comparator for comparing Item type
      */
-    private Comparator<Vertex> comparator;
+    private Comparator<Edge> comparator;
 
     /**
      * Size of the heap
      */
     private int size;
 
-    public VertexPriorityQueue(int heapSize, Comparator comparator) {
-        heap = new Vertex[heapSize];
-        vertexHeapIndex = new HashMap<>();
+    public EdgePriorityQueue(int heapSize, Comparator comparator) {
+        heap = new Edge[heapSize];
+        edgeHeapIndex = new HashMap<>();
         this.comparator = comparator;
         size = 0;
     }
 
     @Override
-    public void add(Vertex x) {
+    public void add(Edge x) {
         if (size == heap.length - 1) {
             resize(heap.length * 2);
         }
@@ -47,20 +49,20 @@ public class VertexPriorityQueue implements MinPQ {
         //add item to last position in heap
         ++size;
         heap[size] = x;
-        vertexHeapIndex.put(x, size);
+        edgeHeapIndex.put(x, size);
         //swim item to correct position in heap
         swim(size);
     }
 
     @Override
-    public Vertex getSmallest() {
+    public Edge getSmallest() {
         return heap[1];
     }
 
     @Override
-    public Vertex removeSmallest() {
-        Vertex val = heap[1];
-        vertexHeapIndex.remove(val);
+    public Edge removeSmallest() {
+        Edge val = heap[1];
+        edgeHeapIndex.remove(val);
 
         heap[1] = heap[size--];
         sink(1);
@@ -78,15 +80,39 @@ public class VertexPriorityQueue implements MinPQ {
         return size;
     }
 
-    public void changeNodeValue(Vertex v, int value) {
-        if (!vertexHeapIndex.containsKey(v)) {
+    /** Checks whether priority queue is empty
+     *
+     * @return {@code true} if empty. {@code false} otherwise
+     */
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    /** Change the value of a particular vertex with the given value.
+     * The priority queue is then re-heapify'd to accommodate the new
+     * changes
+     *
+     * @param v the vertex
+     * @param value the value of the vertex
+     * */
+    public void changePriority(Edge edge, double value) {
+        if (!edgeHeapIndex.containsKey(edge)) {
             return;
         }
 
-        int heapIndex = vertexHeapIndex.get(v);
-        heap[heapIndex].nodeValue = value;
+        int heapIndex = edgeHeapIndex.get(edge);
+        heap[heapIndex].setEdgeWeight(value);
         swim(heapIndex);
         sink(heapIndex);
+    }
+
+    /** Checks if a given edge exists in the priority queue
+     *
+     * @param edge the edge to check
+     * @return {@code true} if edge exists. {@code false} otherwise
+     */
+    public boolean contains(Edge edge) {
+        return edgeHeapIndex.containsKey(edge);
     }
 
     // ==================================== HELPER METHODS ================================ //
@@ -97,7 +123,7 @@ public class VertexPriorityQueue implements MinPQ {
      * @param capacity size of the new heap
      * */
     private void resize(int capacity) {
-        Vertex[] newHeap = new Vertex[capacity];
+        Edge[] newHeap = new Edge[capacity];
         for (int i = 1; i <= size; ++i) {
             newHeap[i] = heap[i];
         }
@@ -159,10 +185,10 @@ public class VertexPriorityQueue implements MinPQ {
     private void swap(int i, int j) {
 
         //Update vertex heap index values
-        vertexHeapIndex.put(heap[j], i);
-        vertexHeapIndex.put(heap[i], j);
+        edgeHeapIndex.put(heap[j], i);
+        edgeHeapIndex.put(heap[i], j);
 
-        Vertex temp = heap[j];
+        Edge temp = heap[j];
         heap[j] = heap[i];
         heap[i] = temp;
     }

@@ -1,5 +1,6 @@
 package priorityqueue;
 
+import graph.Edge;
 /**
  * (Min) Priority Queue: Allowing tracking and removal of
  * the smallest item in a priority queue.
@@ -8,18 +9,18 @@ public interface MinPQ {
     /**
      * Adds the item to the priority queue.
      */
-    void add(Vertex x);
+    void add(Edge x);
 
     /**
      * Returns the smallest item in the priority queue.
      *
      */
-    Vertex getSmallest();
+    Edge getSmallest();
 
     /**
      * Removes the smallest item from the priority queue.
      */
-    Vertex removeSmallest();
+    Edge removeSmallest();
 
     /**
      * Returns the size of the priority queue.

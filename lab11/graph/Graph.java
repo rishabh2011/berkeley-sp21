@@ -1,19 +1,12 @@
 package graph;
 
+import graph.Edge;
+
 /**
  * Graph functions to be implemented by a concrete Graph class
  */
 public interface Graph {
 
-    class Edge {
-        int edge;
-        int edgeWeight;
-
-        public Edge(int edge, int edgeWeight) {
-            this.edge = edge;
-            this.edgeWeight = edgeWeight;
-        }
-    }
     /**
      * Returns the number of vertices in the graph
      */
@@ -31,7 +24,7 @@ public interface Graph {
      * @param w vertex w
      * @param value weight of the edge
      */
-    void addEdge(int v, int w, int value);
+    void addEdge(int v, int w, double value);
 
     /**
      * Returns all connected neighbours of vertex v
